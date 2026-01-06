@@ -1,16 +1,10 @@
-import * as cdk from 'aws-cdk-lib/core';
+import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
-export class ServerlessAuctionPlatformStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+export class ServerlessAuctionPlatformStack extends Stack {
+	constructor(scope: Construct, id: string, props?: StackProps) {
+		super(scope, id, props);
 
-    // The code that defines your stack goes here
-
-    // example resource
-    // const queue = new sqs.Queue(this, 'ServerlessAuctionPlatformQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
-  }
+		// Here all the AWS resources will be created one by one or Define your AWS resources and infrastructure here
+	}
 }
