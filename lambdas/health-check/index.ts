@@ -1,4 +1,5 @@
 import { logger } from '../_shared/logger';
+import { putMetric } from '../_shared/metrics';
 
 export const handler = async (event: any, context: any) => {
 	logger('INFO', 'Health check called', {
@@ -6,6 +7,8 @@ export const handler = async (event: any, context: any) => {
 		path: event.path,
 		method: event.httpMethod,
 	});
+
+	await putMetric('HealthCheckHit');
 
 	return {
 		statusCode: 200,

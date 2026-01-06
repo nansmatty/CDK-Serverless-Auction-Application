@@ -2,6 +2,7 @@ import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { join } from 'path';
 
@@ -20,6 +21,15 @@ export class ServerlessAuctionPlatformStack extends Stack {
 				minify: true,
 			},
 		});
+
+		// Adding metric permission on Lambda, So lambda can create it own metric logs
+		healthCheckLambda.addToRolePolicy(
+			new iam.PolicyStatement({
+				effect: iam.Effect.ALLOW,
+				actions: ['cloudwatch:PutMetricData'],
+				resources: ['*'],
+			})
+		);
 
 		// Api gateway config and healthcheck lambda implementation
 		const api = new apiGateway.RestApi(this, 'AuctionApi', {
