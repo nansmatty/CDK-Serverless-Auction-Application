@@ -15,6 +15,10 @@ export class ServerlessAuctionPlatformStack extends Stack {
 			runtime: Runtime.NODEJS_22_X,
 			handler: 'handler',
 			entry: join(__dirname, '..', 'lambdas', 'health-check', 'index.ts'),
+			bundling: {
+				sourceMap: true,
+				minify: true,
+			},
 		});
 
 		// Api gateway config and healthcheck lambda implementation
