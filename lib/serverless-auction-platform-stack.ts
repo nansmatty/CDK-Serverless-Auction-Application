@@ -50,12 +50,22 @@ export class ServerlessAuctionPlatformStack extends Stack {
 				name: 'SK',
 				type: dynamodb.AttributeType.STRING,
 			},
-
 			billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-
 			removalPolicy: RemovalPolicy.DESTROY,
 		});
 
-		
+		// Create Auction Lambda
+		const createAuctionLambda = new NodejsFunction(this, 'CreateAuctionLambda', {
+			runtime: Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', 'lambdas', 'create-auction', 'index.ts'),
+			handler: 'handler',
+			environment: {
+				AUCTIONS_TABLE: auctionTable.tableName,
+			},
+		});
+
+		auctionTable.grantWriteData(createAuctionLambda);
+
+		api.root.addResource('auctions').addMethod('POST', new apiGateway.LambdaIntegration(createAuctionLambda));
 	}
 }
