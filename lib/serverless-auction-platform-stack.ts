@@ -1,7 +1,8 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { Stack, StackProps, RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { join } from 'path';
@@ -37,5 +38,24 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		});
 
 		api.root.addResource('health').addMethod('GET', new apiGateway.LambdaIntegration(healthCheckLambda));
+
+		// Auction DynamoDB Table Defination
+		const auctionTable = new dynamodb.Table(this, 'AuctionTable', {
+			tableName: 'Auctions',
+			partitionKey: {
+				name: 'PK',
+				type: dynamodb.AttributeType.STRING,
+			},
+			sortKey: {
+				name: 'SK',
+				type: dynamodb.AttributeType.STRING,
+			},
+
+			billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+
+			removalPolicy: RemovalPolicy.DESTROY,
+		});
+
+		
 	}
 }
