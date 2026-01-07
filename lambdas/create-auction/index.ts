@@ -13,17 +13,29 @@ export const handler = async (event: any, context: any) => {
 	});
 
 	const body = JSON.parse(event.body || {});
-	const { title, startingPrice, endsAt } = body;
+	const { title, startingPrice, durationMinutes } = body;
 
-	if (!title || !startingPrice || !endsAt) {
+	if (!title || !startingPrice) {
 		return {
 			statusCode: 400,
 			body: JSON.stringify({ message: 'Missing required fields' }),
 		};
 	}
 
+	if (!durationMinutes || durationMinutes <= 0) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify({ message: 'Invalid duration' }),
+		};
+	}
+
+	if (durationMinutes > 60 * 24 * 7) {
+		throw new Error('Auction duration cannot exceed 7 days');
+	}
+
 	const auctionId = randomUUID();
 	const now = Math.floor(Date.now() / 1000);
+	const endsAt = now + durationMinutes * 60;
 
 	const items = {
 		PK: `AUCTION#${auctionId}`,
