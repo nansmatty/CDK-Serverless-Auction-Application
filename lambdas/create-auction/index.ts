@@ -13,9 +13,9 @@ export const handler = async (event: any, context: any) => {
 	});
 
 	const body = JSON.parse(event.body || {});
-	const { title, startingPrice, durationMinutes } = body;
+	const { title, startingPrice, durationMinutes, description } = body;
 
-	if (!title || !startingPrice) {
+	if (!title || !startingPrice || !description) {
 		return {
 			statusCode: 400,
 			body: JSON.stringify({ message: 'Missing required fields' }),
@@ -43,6 +43,7 @@ export const handler = async (event: any, context: any) => {
 		auctionId,
 		title,
 		startingPrice,
+		description,
 		status: 'OPEN',
 		highestBidAmount: startingPrice,
 		highestBidder: null,
