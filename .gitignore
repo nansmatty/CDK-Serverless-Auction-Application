@@ -7,3 +7,5 @@ node_modules
 .cdk.staging
 cdk.out
 .env
+auction_backend_project_state.md
+gpt_vibe_and_context.md
