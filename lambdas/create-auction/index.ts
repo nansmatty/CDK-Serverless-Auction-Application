@@ -12,7 +12,7 @@ export const handler = async (event: any, context: any) => {
 		body: event.body,
 	});
 
-	const body = JSON.parse(event.body || {});
+	const body = JSON.parse(event.body || '{}');
 	const { title, startingPrice, durationMinutes, description } = body;
 
 	if (!title || !startingPrice || !description) {
@@ -46,7 +46,7 @@ export const handler = async (event: any, context: any) => {
 		description,
 		status: 'OPEN',
 		highestBidAmount: startingPrice,
-		highestBidder: null,
+		highestBidderId: null,
 		endsAt,
 		createdAt: now,
 		updatedAt: now,

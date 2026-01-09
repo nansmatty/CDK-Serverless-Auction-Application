@@ -66,6 +66,21 @@ export class ServerlessAuctionPlatformStack extends Stack {
 
 		auctionTable.grantWriteData(createAuctionLambda);
 
-		api.root.addResource('auctions').addMethod('POST', new apiGateway.LambdaIntegration(createAuctionLambda));
+		const auctionResources = api.root.addResource('auctions');
+
+		auctionResources.addMethod('POST', new apiGateway.LambdaIntegration(createAuctionLambda));
+
+		const placeBidLambda = new NodejsFunction(this, 'PlaceBidLambda', {
+			runtime: Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', 'lambdas', 'place-bid', 'index.ts'),
+			handler: 'handler',
+			environment: {
+				AUCTIONS_TABLE: auctionTable.tableName,
+			},
+		});
+
+		auctionTable.grantWriteData(placeBidLambda);
+
+		auctionResources.addResource('{auctionId}').addResource('bid').addMethod('POST', new apiGateway.LambdaIntegration(placeBidLambda));
 	}
 }

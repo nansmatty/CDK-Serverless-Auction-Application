@@ -8,11 +8,11 @@ const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 
 export const handler = async (event: any, context: any) => {
 	const auctionId = event.pathParameters?.auctionId;
-	const body = JSON.parse(event.body || {});
+	const body = JSON.parse(event.body || '{}');
 
 	const { bidderId, amount } = body;
 
-	if (!auctionId || !bidderId || !amount) {
+	if (!auctionId || !bidderId || typeof amount !== 'number') {
 		return {
 			statusCode: 400,
 			body: JSON.stringify({ message: 'Missing required fields' }),
@@ -36,8 +36,9 @@ export const handler = async (event: any, context: any) => {
 					PK: `AUCTION#${auctionId}`,
 					SK: 'AUCTION',
 				},
-				UpdateExpression: `SET highestBidAmount = :amount, highestBidderId: :bidderId, updatedAt = :now`,
-				ConditionExpression: `status = :open AND highestBidAmount < :amount AND endsAt > :now`,
+				UpdateExpression: `SET highestBidAmount = :amount, highestBidderId = :bidderId, updatedAt = :now`,
+				ConditionExpression: `#status = :open AND highestBidAmount < :amount AND endsAt > :now`,
+				ExpressionAttributeNames: { '#status': 'status' },
 				ExpressionAttributeValues: {
 					':amount': amount,
 					':bidderId': bidderId,
@@ -72,7 +73,7 @@ export const handler = async (event: any, context: any) => {
 			auctionId,
 			bidderId,
 			amount,
-			reason: err.name,
+			reason: err,
 		});
 
 		return {
