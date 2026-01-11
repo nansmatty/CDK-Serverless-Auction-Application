@@ -3,12 +3,16 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { RemovalPolicy } from 'aws-cdk-lib';
 
 export class AuctionTable extends Construct {
-	public readonly auctionTable: dynamodb.Table;
+	public readonly table: dynamodb.Table;
 
 	constructor(scope: Construct, id: string) {
 		super(scope, id);
 
-		this.auctionTable = new dynamodb.Table(this, 'AuctionTable', {
+		// I shouldn't hard code the table name here it will create conflict if I ever do multiple stages
+		// enviroment type deploy if I remove it it will generate random based on stack name
+		// resource name as well as enviroment name
+
+		this.table = new dynamodb.Table(this, 'AuctionTable', {
 			tableName: 'Auctions',
 			partitionKey: {
 				name: 'PK',
