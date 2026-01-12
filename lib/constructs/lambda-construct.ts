@@ -45,7 +45,7 @@ export class AuctionLambdas extends Construct {
 			},
 		});
 
-		this.processAuctionsLambda = new NodejsFunction(this, 'PlaceBidLambda', {
+		this.processAuctionsLambda = new NodejsFunction(this, 'ProcessAuctionLambda', {
 			runtime: lambda.Runtime.NODEJS_22_X,
 			entry: join(__dirname, '..', '..', 'lambdas', 'process-auctions', 'index.ts'),
 			handler: 'handler',
