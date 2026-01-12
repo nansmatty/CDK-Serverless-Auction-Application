@@ -1,5 +1,6 @@
 import { DynamoDBClient, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
+import { putMetric } from '../_shared/metrics';
 
 const client = new DynamoDBClient({});
 const TABLE_NAME = process.env.AUCTIONS_TABLE!;
@@ -72,6 +73,8 @@ export const handler = async (event: any, context: any) => {
 				logger('ERROR', 'Failed to close auction', { pk, reason: err.name });
 			}
 		}
+
+		await putMetric('ProcessAuctionHit');
 	} catch (err: any) {
 		logger('ERROR', 'Process auction failed', {
 			reason: err.name,
