@@ -1,0 +1,80 @@
+import { DynamoDBClient, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { logger } from '../_shared/logger';
+
+const client = new DynamoDBClient({});
+const TABLE_NAME = process.env.AUCTIONS_TABLE!;
+
+export const handler = async (event: any, context: any) => {
+	const now = Math.floor(Date.now() / 1000);
+
+	// TODO: Replace Scan with GSI query on (status, endTime) when scale increases
+
+	// TODO: Handle pagination using LastEvaluatedKey when auction volume grows
+
+	try {
+		const auctionsList = await client.send(
+			new ScanCommand({
+				TableName: TABLE_NAME,
+				FilterExpression: '#status= :open AND #endTime <= :now',
+				ExpressionAttributeNames: {
+					'#status': 'status',
+					'#endTime': 'endsAt',
+				},
+				ExpressionAttributeValues: {
+					':open': { S: 'OPEN' },
+					':now': { N: now.toString() },
+				},
+			})
+		);
+
+		if (!auctionsList.Items || auctionsList.Items.length === 0) {
+			logger('INFO', 'Process auction lambda runned ', {
+				requestId: context.awsRequestId,
+				message: 'No auction items to close',
+			});
+			return;
+		}
+
+		logger('INFO', 'Process auction lambda runned ', {
+			message: `Found ${auctionsList.Items.length} auctions to close`,
+		});
+
+		for (const item of auctionsList.Items) {
+			const pk = item.PK.S!;
+			const sk = item.SK.S!;
+
+			try {
+				const closeAuctionCommand = new UpdateItemCommand({
+					TableName: TABLE_NAME,
+					Key: {
+						PK: { S: pk },
+						SK: { S: sk },
+					},
+					UpdateExpression: `SET #status: = :closed, #updatedTime = :now`,
+					ConditionExpression: '#status= :open',
+					ExpressionAttributeNames: {
+						'#status': 'status',
+						'#updatedTime': 'updatedAt',
+					},
+					ExpressionAttributeValues: {
+						':closed': { S: 'CLOSED' },
+						':now': { N: now.toString() },
+						':open': { S: 'OPEN' },
+					},
+				});
+
+				await client.send(closeAuctionCommand);
+			} catch (err: any) {
+				if (err.name === 'ConditionalCheckFailedException') {
+					continue;
+				}
+
+				logger('ERROR', 'Failed to close auction', { pk, reason: err.name });
+			}
+		}
+	} catch (err: any) {
+		logger('ERROR', 'Process auction failed', {
+			reason: err.name,
+		});
+	}
+};
