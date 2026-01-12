@@ -66,5 +66,13 @@ export class AuctionLambdas extends Construct {
 				resources: ['*'],
 			})
 		);
+
+		this.processAuctionsLambda.addToRolePolicy(
+			new iam.PolicyStatement({
+				effect: iam.Effect.ALLOW,
+				actions: ['cloudwatch:PutMetricData'],
+				resources: ['*'],
+			})
+		);
 	}
 }
