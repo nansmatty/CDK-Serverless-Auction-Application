@@ -51,8 +51,8 @@ export const handler = async (event: any, context: any) => {
 						PK: { S: pk },
 						SK: { S: sk },
 					},
-					UpdateExpression: `SET #status: = :closed, #updatedTime = :now`,
-					ConditionExpression: '#status= :open',
+					UpdateExpression: `SET #status = :closed, #updatedTime = :now`,
+					ConditionExpression: '#status = :open',
 					ExpressionAttributeNames: {
 						'#status': 'status',
 						'#updatedTime': 'updatedAt',
@@ -70,14 +70,14 @@ export const handler = async (event: any, context: any) => {
 					continue;
 				}
 
-				logger('ERROR', 'Failed to close auction', { pk, reason: err.name });
+				logger('ERROR', 'Failed to close auction', { pk, reason: err });
 			}
 		}
 
 		await putMetric('ProcessAuctionHit');
 	} catch (err: any) {
 		logger('ERROR', 'Process auction failed', {
-			reason: err.name,
+			reason: err,
 		});
 	}
 };

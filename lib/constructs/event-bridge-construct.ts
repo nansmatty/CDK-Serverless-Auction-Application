@@ -14,7 +14,7 @@ export class AuctionScheduler extends Construct {
 
 		new events.Rule(this, 'AuctionCloseSchedule', {
 			description: 'Predocially closes expired auctions',
-			schedule: events.Schedule.rate(Duration.minutes(1)),
+			schedule: events.Schedule.rate(Duration.minutes(1000)),
 			targets: [new targets.LambdaFunction(props.processLambdaFunction, { retryAttempts: 2 })],
 		});
 	}
