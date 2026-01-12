@@ -12,6 +12,7 @@ export class AuctionLambdas extends Construct {
 	public readonly healthCheckLambda: NodejsFunction;
 	public readonly createAuctionLambda: NodejsFunction;
 	public readonly placeBidLambda: NodejsFunction;
+	public readonly processAuctionsLambda: NodejsFunction;
 
 	constructor(scope: Construct, id: string, props: AuctionLambdasProps) {
 		super(scope, id);
@@ -38,6 +39,15 @@ export class AuctionLambdas extends Construct {
 		this.placeBidLambda = new NodejsFunction(this, 'PlaceBidLambda', {
 			runtime: lambda.Runtime.NODEJS_22_X,
 			entry: join(__dirname, '..', '..', 'lambdas', 'place-bid', 'index.ts'),
+			handler: 'handler',
+			environment: {
+				AUCTIONS_TABLE: props.tableName,
+			},
+		});
+
+		this.processAuctionsLambda = new NodejsFunction(this, 'PlaceBidLambda', {
+			runtime: lambda.Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', '..', 'lambdas', 'process-auctions', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
