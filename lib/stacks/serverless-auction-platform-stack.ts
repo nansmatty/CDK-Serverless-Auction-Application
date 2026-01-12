@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
 import { AuctionTable } from '../constructs/dynamodb-construct';
 import { AuctionLambdas } from '../constructs/lambda-construct';
+import { AuctionScheduler } from '../constructs/event-bridge-construct';
 
 export class ServerlessAuctionPlatformStack extends Stack {
 	constructor(scope: Construct, id: string, props?: StackProps) {
@@ -31,5 +32,11 @@ export class ServerlessAuctionPlatformStack extends Stack {
 
 		auctionTable.table.grantWriteData(lambdas.createAuctionLambda);
 		auctionTable.table.grantWriteData(lambdas.placeBidLambda);
+		auctionTable.table.grantReadWriteData(lambdas.processAuctionsLambda);
+
+		// Step Function and event-bridge
+		new AuctionScheduler(this, 'AuctionCloseSchedule', {
+			processLambdaFunction: lambdas.processAuctionsLambda,
+		});
 	}
 }
