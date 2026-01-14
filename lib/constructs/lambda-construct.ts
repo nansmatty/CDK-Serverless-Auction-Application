@@ -9,10 +9,11 @@ interface AuctionLambdasProps {
 }
 
 export class AuctionLambdas extends Construct {
-	public readonly healthCheckLambda: NodejsFunction;
-	public readonly createAuctionLambda: NodejsFunction;
-	public readonly placeBidLambda: NodejsFunction;
-	public readonly processAuctionsLambda: NodejsFunction;
+	public readonly healthCheckLambda: lambda.IFunction;
+	public readonly createAuctionLambda: lambda.IFunction;
+	public readonly getAuctionById: lambda.IFunction;
+	public readonly placeBidLambda: lambda.IFunction;
+	public readonly processAuctionsLambda: lambda.IFunction;
 
 	constructor(scope: Construct, id: string, props: AuctionLambdasProps) {
 		super(scope, id);
@@ -48,6 +49,15 @@ export class AuctionLambdas extends Construct {
 		this.processAuctionsLambda = new NodejsFunction(this, 'ProcessAuctionLambda', {
 			runtime: lambda.Runtime.NODEJS_22_X,
 			entry: join(__dirname, '..', '..', 'lambdas', 'process-auctions', 'index.ts'),
+			handler: 'handler',
+			environment: {
+				AUCTIONS_TABLE: props.tableName,
+			},
+		});
+
+		this.getAuctionById = new NodejsFunction(this, 'GetAuctionById', {
+			runtime: lambda.Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', '..', 'lambdas', 'get-auction-by-id', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
