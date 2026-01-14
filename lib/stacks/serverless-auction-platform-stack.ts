@@ -28,7 +28,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 
 		healthResources.addMethod('GET', new apiGateway.LambdaIntegration(lambdas.healthCheckLambda));
 		auctionResources.addMethod('POST', new apiGateway.LambdaIntegration(lambdas.createAuctionLambda));
-		auctionById.addMethod('GET', new apiGateway.LambdaIntegration(lambdas.getAuctionById));
+		auctionById.addMethod('GET', new apiGateway.LambdaIntegration(lambdas.getAuctionByIdLambda));
 		bidResource.addMethod('POST', new apiGateway.LambdaIntegration(lambdas.placeBidLambda));
 
 		auctionTable.table.grantWriteData(lambdas.createAuctionLambda);
