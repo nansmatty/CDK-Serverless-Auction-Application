@@ -25,7 +25,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		const bidResource = auctionById.addResource('bid');
 
 		// Api gateway config and healthcheck lambda implementation
-		lambdas.grantMetricPublishing();
+		lambdas.grantOperationalPublishing();
 
 		// Audit Lambda
 		const auditLambda = new GenerateAuditFunction(this, 'GenerateAuditLambda', {

@@ -78,21 +78,21 @@ export class AuctionLambdas extends Construct {
 	// Here all the AWS resources will be created one by one or Define your AWS resources and infrastructure here
 	// Adding metric iam permission on Lambda, So lambda can create it own metric logs
 
-	grantMetricPublishing() {
+	grantOperationalPublishing() {
 		this.healthCheckLambda.addToRolePolicy(
 			new iam.PolicyStatement({
 				effect: iam.Effect.ALLOW,
 				actions: ['cloudwatch:PutMetricData'],
 				resources: ['*'],
-			})
+			}),
 		);
 
 		this.processAuctionsLambda.addToRolePolicy(
 			new iam.PolicyStatement({
 				effect: iam.Effect.ALLOW,
-				actions: ['cloudwatch:PutMetricData'],
+				actions: ['cloudwatch:PutMetricData', 'events:PutEvents'],
 				resources: ['*'],
-			})
+			}),
 		);
 	}
 }

@@ -70,9 +70,14 @@ export const handler = async (event: any, context: any) => {
 				});
 
 				await client.send(closeAuctionCommand);
+			} catch (err: any) {
+				if (err.name === 'ConditionalCheckFailedException') {
+					continue;
+				}
+				logger('ERROR', 'Failed to close auction', { pk, reason: err });
+			}
 
-				// In this part the eventbridge event will be triggered
-
+			try {
 				await eventBridge.send(
 					new PutEventsCommand({
 						Entries: [
@@ -88,11 +93,10 @@ export const handler = async (event: any, context: any) => {
 					}),
 				);
 			} catch (err: any) {
-				if (err.name === 'ConditionalCheckFailedException') {
-					continue;
-				}
-
-				logger('ERROR', 'Failed to close auction', { pk, reason: err });
+				logger('ERROR', 'Auction closed but failed to emit AuctionClosed event', {
+					auctionId,
+					reason: err,
+				});
 			}
 		}
 
