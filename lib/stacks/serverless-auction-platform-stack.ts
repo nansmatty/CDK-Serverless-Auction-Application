@@ -1,9 +1,9 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
-import { AuctionTable } from '../constructs/dynamodb-construct';
-import { AuctionLambdas } from '../constructs/lambda-construct';
-import { AuctionScheduler } from '../constructs/event-bridge-construct';
+import { AuctionTable } from '../service-constructs/dynamodb-construct';
+import { AuctionLambdas } from '../service-constructs/lambda-construct';
+import { AuctionScheduler } from '../service-constructs/event-bridge-construct';
 
 export class ServerlessAuctionPlatformStack extends Stack {
 	constructor(scope: Construct, id: string, props?: StackProps) {
