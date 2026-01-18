@@ -47,7 +47,6 @@ export const handler = async (event: any, context: any) => {
 			const pk = item.PK.S!;
 			const sk = item.SK.S!;
 			const auctionId = item.auctionId.S!;
-			const auctionItemTitle = item.title.S!;
 
 			try {
 				const closeAuctionCommand = new UpdateItemCommand({
@@ -82,7 +81,6 @@ export const handler = async (event: any, context: any) => {
 								DetailType: 'AuctionClosed',
 								Detail: JSON.stringify({
 									auctionId,
-									auctionItemTitle,
 									closedAt: nowIso,
 								}),
 							},
