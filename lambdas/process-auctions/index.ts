@@ -75,6 +75,7 @@ export const handler = async (event: any, context: any) => {
 					continue;
 				}
 				logger('ERROR', 'Failed to close auction', { pk, reason: err });
+				continue;
 			}
 
 			try {
