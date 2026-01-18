@@ -1,12 +1,15 @@
 import { DynamoDBClient, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
 import { putMetric } from '../_shared/metrics';
+import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 
 const client = new DynamoDBClient({});
+const eventBridge = new EventBridgeClient({});
 const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 
 export const handler = async (event: any, context: any) => {
 	const now = Math.floor(Date.now() / 1000);
+	const nowIso = new Date().toISOString();
 
 	// TODO: Replace Scan with GSI query on (status, endTime) when scale increases
 
@@ -25,7 +28,7 @@ export const handler = async (event: any, context: any) => {
 					':open': { S: 'OPEN' },
 					':now': { N: now.toString() },
 				},
-			})
+			}),
 		);
 
 		if (!auctionsList.Items || auctionsList.Items.length === 0) {
@@ -43,6 +46,8 @@ export const handler = async (event: any, context: any) => {
 		for (const item of auctionsList.Items) {
 			const pk = item.PK.S!;
 			const sk = item.SK.S!;
+			const auctionId = item.auctionId.S!;
+			const auctionItemTitle = item.title.S!;
 
 			try {
 				const closeAuctionCommand = new UpdateItemCommand({
@@ -62,9 +67,28 @@ export const handler = async (event: any, context: any) => {
 						':now': { N: now.toString() },
 						':open': { S: 'OPEN' },
 					},
+					ReturnValues: 'ALL_NEW',
 				});
 
 				await client.send(closeAuctionCommand);
+
+				// In this part the eventbridge event will be triggered
+
+				await eventBridge.send(
+					new PutEventsCommand({
+						Entries: [
+							{
+								Source: 'auction.lifecycle',
+								DetailType: 'AuctionClosed',
+								Detail: JSON.stringify({
+									auctionId,
+									auctionItemTitle,
+									closedAt: nowIso,
+								}),
+							},
+						],
+					}),
+				);
 			} catch (err: any) {
 				if (err.name === 'ConditionalCheckFailedException') {
 					continue;
