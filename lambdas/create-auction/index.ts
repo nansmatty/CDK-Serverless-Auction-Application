@@ -42,6 +42,8 @@ export const handler = async (event: any, context: any) => {
 	const items = {
 		PK: `AUCTION#${auctionId}`,
 		SK: 'AUCTION',
+		GSI1PK: 'STATUS#OPEN',
+		GSI1SK: endsAt,
 		auctionId,
 		title,
 		startingPrice,
