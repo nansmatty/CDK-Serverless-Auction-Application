@@ -1,9 +1,11 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
-import { PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { randomUUID } from 'crypto';
 
 const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
+
 const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 
 export const handler = async (event: any, context: any) => {
@@ -20,6 +22,10 @@ export const handler = async (event: any, context: any) => {
 	}
 
 	const now = Math.floor(Date.now() / 1000);
+	const TEN_DAYS = 10 * 24 * 60 * 60;
+	const timeToLive = now + TEN_DAYS;
+
+	const bidId = randomUUID();
 
 	logger('INFO', 'Place bid attempt', {
 		auctionId,
@@ -45,10 +51,8 @@ export const handler = async (event: any, context: any) => {
 					':open': 'OPEN',
 					':now': now,
 				},
-			})
+			}),
 		);
-
-		const bidId = randomUUID();
 
 		await client.send(
 			new PutCommand({
@@ -59,9 +63,11 @@ export const handler = async (event: any, context: any) => {
 					bidId,
 					bidderId,
 					amount,
+					recordExpiresAt: timeToLive,
 					createdAt: now,
 				},
-			})
+				ConditionExpression: 'attribute_not_exists(PK)',
+			}),
 		);
 
 		return {

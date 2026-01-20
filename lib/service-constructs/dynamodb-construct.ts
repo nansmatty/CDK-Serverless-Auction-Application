@@ -24,6 +24,7 @@ export class AuctionTable extends Construct {
 			},
 			billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
 			removalPolicy: RemovalPolicy.DESTROY,
+			timeToLiveAttribute: 'recordExpiresAt',
 		});
 	}
 }

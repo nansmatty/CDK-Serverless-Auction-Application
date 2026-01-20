@@ -36,6 +36,8 @@ export const handler = async (event: any, context: any) => {
 	const auctionId = randomUUID();
 	const now = Math.floor(Date.now() / 1000);
 	const endsAt = now + durationMinutes * 60;
+	const TEN_DAYS = 10 * 24 * 60 * 60;
+	const timeToLive = endsAt + TEN_DAYS;
 
 	const items = {
 		PK: `AUCTION#${auctionId}`,
@@ -48,6 +50,7 @@ export const handler = async (event: any, context: any) => {
 		highestBidAmount: startingPrice,
 		highestBidderId: null,
 		endsAt,
+		recordExpiresAt: timeToLive,
 		createdAt: now,
 		updatedAt: now,
 	};
@@ -56,7 +59,8 @@ export const handler = async (event: any, context: any) => {
 		new PutCommand({
 			TableName: TABLE_NAME,
 			Item: items,
-		})
+			ConditionExpression: 'attribute_not_exists(PK)',
+		}),
 	);
 
 	logger('INFO', 'Auction created', {
