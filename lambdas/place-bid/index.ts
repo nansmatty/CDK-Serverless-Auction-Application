@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
-import { DynamoDBDocumentClient, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { randomUUID } from 'crypto';
 
 const client = new DynamoDBClient({});
@@ -35,38 +35,45 @@ export const handler = async (event: any, context: any) => {
 	});
 
 	try {
-		await client.send(
-			new UpdateCommand({
-				TableName: TABLE_NAME,
-				Key: {
-					PK: `AUCTION#${auctionId}`,
-					SK: 'AUCTION',
-				},
-				UpdateExpression: `SET highestBidAmount = :amount, highestBidderId = :bidderId, updatedAt = :now`,
-				ConditionExpression: `#status = :open AND highestBidAmount < :amount AND endsAt > :now`,
-				ExpressionAttributeNames: { '#status': 'status' },
-				ExpressionAttributeValues: {
-					':amount': amount,
-					':bidderId': bidderId,
-					':open': 'OPEN',
-					':now': now,
-				},
-			}),
-		);
+		// Changes implementing atomicity behaviour so no data loss happen
 
-		await client.send(
-			new PutCommand({
-				TableName: TABLE_NAME,
-				Item: {
-					PK: `AUCTION#${auctionId}`,
-					SK: `BID#${now}#${bidId}`,
-					bidId,
-					bidderId,
-					amount,
-					recordExpiresAt: timeToLive,
-					createdAt: now,
-				},
-				ConditionExpression: 'attribute_not_exists(PK)',
+		await docClient.send(
+			new TransactWriteCommand({
+				TransactItems: [
+					{
+						Update: {
+							TableName: TABLE_NAME,
+							Key: {
+								PK: `AUCTION#${auctionId}`,
+								SK: 'AUCTION',
+							},
+							UpdateExpression: `SET highestBidAmount = :amount, highestBidderId = :bidderId, updatedAt = :now`,
+							ConditionExpression: `#status = :open AND highestBidAmount < :amount AND endsAt > :now`,
+							ExpressionAttributeNames: { '#status': 'status' },
+							ExpressionAttributeValues: {
+								':amount': amount,
+								':bidderId': bidderId,
+								':open': 'OPEN',
+								':now': now,
+							},
+						},
+					},
+					{
+						Put: {
+							TableName: TABLE_NAME,
+							Item: {
+								PK: `AUCTION#${auctionId}`,
+								SK: `BID#${now}#${bidId}`,
+								bidId,
+								bidderId,
+								amount,
+								recordExpiresAt: timeToLive,
+								createdAt: now,
+							},
+							ConditionExpression: 'attribute_not_exists(PK)',
+						},
+					},
+				],
 			}),
 		);
 
