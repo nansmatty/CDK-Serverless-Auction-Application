@@ -26,5 +26,18 @@ export class AuctionTable extends Construct {
 			removalPolicy: RemovalPolicy.DESTROY,
 			timeToLiveAttribute: 'recordExpiresAt',
 		});
+
+		this.table.addGlobalSecondaryIndex({
+			indexName: 'GSI1',
+			partitionKey: {
+				name: 'GSI1PK',
+				type: dynamodb.AttributeType.STRING,
+			},
+			sortKey: {
+				name: 'GSI1SK',
+				type: dynamodb.AttributeType.NUMBER,
+			},
+			projectionType: dynamodb.ProjectionType.ALL,
+		});
 	}
 }

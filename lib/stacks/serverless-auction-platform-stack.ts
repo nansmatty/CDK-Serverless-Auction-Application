@@ -24,7 +24,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		const auctionById = auctionResources.addResource('{auctionId}');
 		const bidResource = auctionById.addResource('bid');
 
-		// Api gateway config and healthcheck lambda implementation
+		// list of external function which grants or special features
 		lambdas.grantOperationalPublishing();
 
 		// Audit Lambda
