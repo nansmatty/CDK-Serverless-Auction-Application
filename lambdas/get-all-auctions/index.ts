@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { logger } from '../_shared/logger';
 
 const client = new DynamoDBClient({});
@@ -16,19 +16,12 @@ export const handler = async (event: any, context: any) => {
 
 	try {
 		const auctionItems = await docClient.send(
-			new ScanCommand({
+			new QueryCommand({
 				TableName: TABLE_NAME,
-				FilterExpression: '#status= :open AND #endTime > :now AND SK = :metadata',
-				ExpressionAttributeNames: {
-					'#status': 'status',
-					'#endTime': 'endsAt',
-				},
-				ExpressionAttributeValues: {
-					':open': 'OPEN',
-					':now': now,
-					':metadata': 'AUCTION',
-				},
-			})
+				IndexName: 'GSI1',
+				KeyConditionExpression: 'GSI1PK = :status AND GSI1SK > :now',
+				ExpressionAttributeValues: { ':status': 'STATUS#OPEN', ':now': now },
+			}),
 		);
 
 		return {

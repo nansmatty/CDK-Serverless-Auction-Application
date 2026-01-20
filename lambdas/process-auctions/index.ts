@@ -2,6 +2,7 @@ import { DynamoDBClient, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-
 import { logger } from '../_shared/logger';
 import { putMetric } from '../_shared/metrics';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
+import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 const client = new DynamoDBClient({});
 const eventBridge = new EventBridgeClient({});
@@ -17,17 +18,11 @@ export const handler = async (event: any, context: any) => {
 
 	try {
 		const auctionsList = await client.send(
-			new ScanCommand({
+			new QueryCommand({
 				TableName: TABLE_NAME,
-				FilterExpression: '#status= :open AND #endTime <= :now',
-				ExpressionAttributeNames: {
-					'#status': 'status',
-					'#endTime': 'endsAt',
-				},
-				ExpressionAttributeValues: {
-					':open': { S: 'OPEN' },
-					':now': { N: now.toString() },
-				},
+				IndexName: 'GSI1',
+				KeyConditionExpression: 'GSI1PK = :status AND GSI1SK <= :now',
+				ExpressionAttributeValues: { ':status': 'STATUS#OPEN', ':now': now },
 			}),
 		);
 
@@ -55,7 +50,7 @@ export const handler = async (event: any, context: any) => {
 						PK: { S: pk },
 						SK: { S: sk },
 					},
-					UpdateExpression: `SET #status = :closed, #updatedTime = :now`,
+					UpdateExpression: `SET #status = :closed, #updatedTime = :now, GSI1PK = :closedStatus`,
 					ConditionExpression: '#status = :open',
 					ExpressionAttributeNames: {
 						'#status': 'status',
@@ -64,6 +59,7 @@ export const handler = async (event: any, context: any) => {
 					ExpressionAttributeValues: {
 						':closed': { S: 'CLOSED' },
 						':now': { N: now.toString() },
+						':closedStatus': { S: 'STATUS#CLOSED' },
 						':open': { S: 'OPEN' },
 					},
 					ReturnValues: 'ALL_NEW',
