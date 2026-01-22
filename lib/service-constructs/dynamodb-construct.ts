@@ -2,8 +2,9 @@ import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { RemovalPolicy } from 'aws-cdk-lib';
 
-export class AuctionTable extends Construct {
-	public readonly table: dynamodb.Table;
+export class DynamoTables extends Construct {
+	public readonly auctionTable: dynamodb.Table;
+	public readonly authTable: dynamodb.Table;
 
 	constructor(scope: Construct, id: string) {
 		super(scope, id);
@@ -12,7 +13,7 @@ export class AuctionTable extends Construct {
 		// enviroment type deploy if I remove it it will generate random based on stack name
 		// resource name as well as enviroment name
 
-		this.table = new dynamodb.Table(this, 'AuctionTable', {
+		this.auctionTable = new dynamodb.Table(this, 'AuctionTable', {
 			tableName: 'Auctions',
 			partitionKey: {
 				name: 'PK',
@@ -27,7 +28,7 @@ export class AuctionTable extends Construct {
 			timeToLiveAttribute: 'recordExpiresAt',
 		});
 
-		this.table.addGlobalSecondaryIndex({
+		this.auctionTable.addGlobalSecondaryIndex({
 			indexName: 'GSI1',
 			partitionKey: {
 				name: 'GSI1PK',
@@ -38,6 +39,20 @@ export class AuctionTable extends Construct {
 				type: dynamodb.AttributeType.NUMBER,
 			},
 			projectionType: dynamodb.ProjectionType.ALL,
+		});
+
+		this.authTable = new dynamodb.Table(this, 'AuthTable', {
+			tableName: 'Authentication',
+			partitionKey: {
+				name: 'PK',
+				type: dynamodb.AttributeType.STRING,
+			},
+			sortKey: {
+				name: 'SK',
+				type: dynamodb.AttributeType.STRING,
+			},
+			billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+			removalPolicy: RemovalPolicy.DESTROY, // This is only for the dev platform, not for prod
 		});
 	}
 }
