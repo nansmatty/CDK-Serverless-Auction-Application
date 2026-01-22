@@ -42,7 +42,7 @@ export const handler = async (event: any, context: any) => {
 		for (const item of auctionsList.Items) {
 			const pk = item.PK;
 			const sk = item.SK;
-			const auctionId = item.auctionId.S!;
+			const auctionId = item.auctionId;
 
 			try {
 				const closeAuctionCommand = new UpdateCommand({

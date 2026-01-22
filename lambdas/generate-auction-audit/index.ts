@@ -19,7 +19,7 @@ interface AuctionClosedEvent {
 }
 
 export const handler = async (event: AuctionClosedEvent, context: any) => {
-	const { auctionId, closedAt, closeVersion } = event.detail;
+	const { auctionId, closedAt } = event.detail;
 
 	try {
 		// FETCH AUCTION
@@ -86,7 +86,7 @@ export const handler = async (event: AuctionClosedEvent, context: any) => {
 
 		const audit = {
 			auctionId,
-			title: auctionItem.title?.S!,
+			title: auctionItem.title,
 			closedAt,
 			bidCount: bids.length,
 			winnerBidId: winningBid?.bidId ?? null,
