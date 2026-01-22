@@ -7,6 +7,7 @@ import { AuctionScheduler } from '../service-constructs/event-bridge-construct';
 import { AuditS3Bucket } from '../service-constructs/s3-bucket-construct';
 import { GenerateAuditFunction } from '../functions-construct/generate-audit-function-construct';
 import { AuctionClosedRule } from '../functions-construct/auction-closed-rule-construct';
+import { AuthLambdas } from '../service-constructs/auth-lambda-construct';
 
 export class ServerlessAuctionPlatformStack extends Stack {
 	constructor(scope: Construct, id: string, props?: StackProps) {
@@ -15,6 +16,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		// AWS Service Defination or Construct
 		const table = new DynamoTables(this, 'AuctionTable');
 		const auctionsLambdas = new AuctionLambdas(this, 'AuctionLambdas', { tableName: table.auctionTable.tableName });
+		const authLambdas = new AuthLambdas(this, 'AuthLambdas', { tableName: table.authTable.tableName });
 		const auditBucket = new AuditS3Bucket(this, 'AuctionAuditBucket', { environment: 'dev' });
 
 		// API Gateway
