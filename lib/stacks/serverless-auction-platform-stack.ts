@@ -23,6 +23,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		const api = new apiGateway.RestApi(this, 'AuctionApi', { restApiName: 'Auction Service' });
 		const healthResources = api.root.addResource('health');
 		const auctionResources = api.root.addResource('auctions');
+		const authResources = api.root.addResource('auth');
 		const auctionById = auctionResources.addResource('{auctionId}');
 		const bidResource = auctionById.addResource('bid');
 
@@ -42,12 +43,17 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		auctionById.addMethod('GET', new apiGateway.LambdaIntegration(auctionsLambdas.getAuctionByIdLambda));
 		bidResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.placeBidLambda));
 
+		// Authentication lambdas integration with API Gateways creating paths
+		authResources.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.userSignUpLambda));
+
 		// Granting permissions to dynamodb table depending on auctionsLambdas requirement
 		table.auctionTable.grantWriteData(auctionsLambdas.createAuctionLambda);
 		table.auctionTable.grantReadData(auctionsLambdas.getAuctionByIdLambda);
 		table.auctionTable.grantReadData(auctionsLambdas.getAllAuctionsLambda);
 		table.auctionTable.grantWriteData(auctionsLambdas.placeBidLambda);
 		table.auctionTable.grantReadWriteData(auctionsLambdas.processAuctionsLambda);
+
+		table.authTable.grantReadWriteData(authLambdas.userSignUpLambda);
 
 		// Step Function and event-bridge
 		new AuctionScheduler(this, 'AuctionCloseSchedule', { processLambdaFunction: auctionsLambdas.processAuctionsLambda });
