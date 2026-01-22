@@ -14,7 +14,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		super(scope, id, props);
 
 		// AWS Service Defination or Construct
-		const table = new DynamoTables(this, 'AuctionTable');
+		const table = new DynamoTables(this, 'DynamoTables');
 		const auctionsLambdas = new AuctionLambdas(this, 'AuctionLambdas', { tableName: table.auctionTable.tableName });
 		const authLambdas = new AuthLambdas(this, 'AuthLambdas', { tableName: table.authTable.tableName });
 		const auditBucket = new AuditS3Bucket(this, 'AuctionAuditBucket', { environment: 'dev' });
@@ -24,8 +24,11 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		const healthResources = api.root.addResource('health');
 		const auctionResources = api.root.addResource('auctions');
 		const authResources = api.root.addResource('auth');
+
 		const auctionById = auctionResources.addResource('{auctionId}');
 		const bidResource = auctionById.addResource('bid');
+
+		const signup = authResources.addResource('signup');
 
 		// list of external function which grants or special features
 		auctionsLambdas.grantOperationalPublishing();
@@ -44,7 +47,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		bidResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.placeBidLambda));
 
 		// Authentication lambdas integration with API Gateways creating paths
-		authResources.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.userSignUpLambda));
+		signup.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.userSignUpLambda));
 
 		// Granting permissions to dynamodb table depending on auctionsLambdas requirement
 		table.auctionTable.grantWriteData(auctionsLambdas.createAuctionLambda);

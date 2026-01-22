@@ -1,3 +1,4 @@
+import { Duration } from 'aws-cdk-lib';
 import { IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
@@ -17,6 +18,8 @@ export class AuthLambdas extends Construct {
 			runtime: Runtime.NODEJS_22_X,
 			entry: join(__dirname, '..', '..', 'auth-lambdas', 'signup', 'index.ts'),
 			handler: 'handler',
+			timeout: Duration.seconds(10),
+			memorySize: 256,
 			environment: {
 				AUTH_TABLE: props.tableName,
 			},
