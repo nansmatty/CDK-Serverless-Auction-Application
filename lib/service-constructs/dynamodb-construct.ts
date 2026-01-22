@@ -53,6 +53,7 @@ export class DynamoTables extends Construct {
 			},
 			billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
 			removalPolicy: RemovalPolicy.DESTROY, // This is only for the dev platform, not for prod
+			timeToLiveAttribute: 'accountVerificationExpiresAt',
 		});
 
 		this.authTable.addGlobalSecondaryIndex({

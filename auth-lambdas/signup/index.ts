@@ -2,7 +2,6 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { logger } from '../../auctions-lambdas/_shared/logger';
 import { randomUUID } from 'crypto';
-import bcrypt from 'bcryptjs';
 import { AuthUtils } from '../../utils/auth-utils-functions';
 
 const client = new DynamoDBClient({});
@@ -45,7 +44,7 @@ export const handler = async (event: any, context: any) => {
 		password: passwordHash,
 		role: 'USER',
 		emailVerified: false,
-		verficationCode: code,
+		verificationCode: code,
 		verificationCodeExpiresAt: new Date(now + 10 * 60 * 1000).toISOString(),
 		accountVerificationExpiresAt: new Date(now + 48 * 60 * 60 * 1000).toISOString(),
 		createdAt: new Date(now).toISOString(),
@@ -94,6 +93,7 @@ export const handler = async (event: any, context: any) => {
 		statusCode: 201,
 		body: JSON.stringify({
 			userID,
+			message: 'User registered successfully. OTP has been to your registered email.',
 		}),
 	};
 };
