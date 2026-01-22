@@ -64,7 +64,7 @@ export class DynamoTables extends Construct {
 			},
 			sortKey: {
 				name: 'GSI1SK',
-				type: dynamodb.AttributeType.NUMBER,
+				type: dynamodb.AttributeType.STRING,
 			},
 			projectionType: dynamodb.ProjectionType.ALL,
 		});

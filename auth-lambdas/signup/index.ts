@@ -7,7 +7,7 @@ import { AuthUtils } from '../../utils/auth-utils-functions';
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-const TABLE_NAME = process.env.AUTH_TABLE;
+const AUTH_TABLE = process.env.AUTH_TABLE;
 
 export const handler = async (event: any, context: any) => {
 	const body = JSON.parse(event.body || '{}');
@@ -54,7 +54,7 @@ export const handler = async (event: any, context: any) => {
 	try {
 		const emailCheck = await docClient.send(
 			new QueryCommand({
-				TableName: TABLE_NAME,
+				TableName: AUTH_TABLE,
 				IndexName: 'EmailIndex',
 				KeyConditionExpression: 'GSI1PK = :email AND GSI1SK = :user',
 				ExpressionAttributeValues: { ':email': `EMAIL#${email}`, ':user': 'PROFILE' },
@@ -70,7 +70,7 @@ export const handler = async (event: any, context: any) => {
 
 		await docClient.send(
 			new PutCommand({
-				TableName: TABLE_NAME,
+				TableName: AUTH_TABLE,
 				Item: items,
 				ConditionExpression: 'attribute_not_exists(PK)',
 			}),
@@ -80,6 +80,14 @@ export const handler = async (event: any, context: any) => {
 			userID,
 			requestId: context.awsRequestId,
 		});
+
+		return {
+			statusCode: 201,
+			body: JSON.stringify({
+				userID,
+				message: 'User registered successfully. OTP has been to your registered email.',
+			}),
+		};
 	} catch (err: any) {
 		logger('ERROR', 'Failed to create an user', {
 			userID,
@@ -87,13 +95,10 @@ export const handler = async (event: any, context: any) => {
 			errorMessage: err?.message,
 			errorStack: err?.stack,
 		});
-	}
 
-	return {
-		statusCode: 201,
-		body: JSON.stringify({
-			userID,
-			message: 'User registered successfully. OTP has been to your registered email.',
-		}),
-	};
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'Signup failed' }),
+		};
+	}
 };
