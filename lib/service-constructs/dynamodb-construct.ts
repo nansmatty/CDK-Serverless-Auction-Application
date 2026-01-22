@@ -54,5 +54,18 @@ export class DynamoTables extends Construct {
 			billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
 			removalPolicy: RemovalPolicy.DESTROY, // This is only for the dev platform, not for prod
 		});
+
+		this.authTable.addGlobalSecondaryIndex({
+			indexName: 'EmailIndex',
+			partitionKey: {
+				name: 'GSI1PK',
+				type: dynamodb.AttributeType.STRING,
+			},
+			sortKey: {
+				name: 'GSI1SK',
+				type: dynamodb.AttributeType.NUMBER,
+			},
+			projectionType: dynamodb.ProjectionType.ALL,
+		});
 	}
 }

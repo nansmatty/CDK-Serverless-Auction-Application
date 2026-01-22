@@ -2,7 +2,7 @@ import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
 import { DynamoTables } from '../service-constructs/dynamodb-construct';
-import { AuctionLambdas } from '../service-constructs/lambda-construct';
+import { AuctionLambdas } from '../service-constructs/auction-lambda-construct';
 import { AuctionScheduler } from '../service-constructs/event-bridge-construct';
 import { AuditS3Bucket } from '../service-constructs/s3-bucket-construct';
 import { GenerateAuditFunction } from '../functions-construct/generate-audit-function-construct';
