@@ -22,7 +22,7 @@ export class AuctionLambdas extends Construct {
 		this.healthCheckLambda = new NodejsFunction(this, 'HealthCheckLambda', {
 			runtime: lambda.Runtime.NODEJS_22_X,
 			handler: 'handler',
-			entry: join(__dirname, '..', '..', 'lambdas', 'health-check', 'index.ts'),
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'health-check', 'index.ts'),
 			bundling: {
 				sourceMap: true,
 				minify: true,
@@ -31,7 +31,7 @@ export class AuctionLambdas extends Construct {
 
 		this.createAuctionLambda = new NodejsFunction(this, 'CreateAuctionLambda', {
 			runtime: lambda.Runtime.NODEJS_22_X,
-			entry: join(__dirname, '..', '..', 'lambdas', 'create-auction', 'index.ts'),
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'create-auction', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
@@ -40,7 +40,7 @@ export class AuctionLambdas extends Construct {
 
 		this.placeBidLambda = new NodejsFunction(this, 'PlaceBidLambda', {
 			runtime: lambda.Runtime.NODEJS_22_X,
-			entry: join(__dirname, '..', '..', 'lambdas', 'place-bid', 'index.ts'),
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'place-bid', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
@@ -49,7 +49,7 @@ export class AuctionLambdas extends Construct {
 
 		this.processAuctionsLambda = new NodejsFunction(this, 'ProcessAuctionLambda', {
 			runtime: lambda.Runtime.NODEJS_22_X,
-			entry: join(__dirname, '..', '..', 'lambdas', 'process-auctions', 'index.ts'),
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'process-auctions', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
@@ -58,7 +58,7 @@ export class AuctionLambdas extends Construct {
 
 		this.getAuctionByIdLambda = new NodejsFunction(this, 'GetAuctionById', {
 			runtime: lambda.Runtime.NODEJS_22_X,
-			entry: join(__dirname, '..', '..', 'lambdas', 'get-auction-by-id', 'index.ts'),
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'get-auction-by-id', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
@@ -67,7 +67,7 @@ export class AuctionLambdas extends Construct {
 
 		this.getAllAuctionsLambda = new NodejsFunction(this, 'GetAllAuctions', {
 			runtime: lambda.Runtime.NODEJS_22_X,
-			entry: join(__dirname, '..', '..', 'lambdas', 'get-all-auctions', 'index.ts'),
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'get-all-auctions', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,

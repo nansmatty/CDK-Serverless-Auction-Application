@@ -19,7 +19,7 @@ export class GenerateAuditFunction extends Construct {
 
 		this.generateAuditLambda = new NodejsFunction(this, 'GenerateAuditLambda', {
 			runtime: Runtime.NODEJS_22_X,
-			entry: join(__dirname, '..', '..', 'lambdas', 'generate-auction-audit', 'index.ts'),
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'generate-auction-audit', 'index.ts'),
 			handler: 'handler',
 			timeout: Duration.seconds(30),
 			memorySize: 512,
