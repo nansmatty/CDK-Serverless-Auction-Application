@@ -9,7 +9,6 @@ const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 export const handler = async (event: any, context: any) => {
 	logger('INFO', 'Create auction request received.', {
 		requestId: context.awsRequestId,
-		body: event.body,
 	});
 
 	const body = JSON.parse(event.body || '{}');
