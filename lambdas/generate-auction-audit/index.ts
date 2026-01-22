@@ -1,8 +1,10 @@
-import { DynamoDBClient, GetItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { logger } from '../_shared/logger';
+import { DynamoDBDocumentClient, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 
 const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
 const s3Client = new S3Client({});
 
 const TABLE_NAME = process.env.AUCTIONS_TABLE!;
@@ -21,12 +23,12 @@ export const handler = async (event: AuctionClosedEvent, context: any) => {
 
 	try {
 		// FETCH AUCTION
-		const getAuctionResponse = await client.send(
-			new GetItemCommand({
+		const getAuctionResponse = await docClient.send(
+			new GetCommand({
 				TableName: TABLE_NAME,
 				Key: {
-					PK: { S: `AUCTION#${auctionId}` },
-					SK: { S: 'AUCTION' },
+					PK: `AUCTION#${auctionId}`,
+					SK: 'AUCTION',
 				},
 				ConsistentRead: true,
 			}),
@@ -44,7 +46,7 @@ export const handler = async (event: AuctionClosedEvent, context: any) => {
 
 		const auctionItem = getAuctionResponse.Item;
 
-		if (auctionItem.status.S! !== 'CLOSED') {
+		if (auctionItem.status !== 'CLOSED') {
 			logger('WARN', 'Audit auction lambda runned', {
 				message: 'Auction not closed, skipping audit',
 				auctionId,
@@ -54,35 +56,25 @@ export const handler = async (event: AuctionClosedEvent, context: any) => {
 			return;
 		}
 
-		if (closeVersion !== undefined && auctionItem.closeVersion && Number(auctionItem.closeVersion.N) !== closeVersion) {
-			logger('WARN', 'Audit auction lambda runned', {
-				message: 'Close version mismatch, skipping audit',
-				auctionId,
-				requestId: context.awsRequestId,
-			});
-
-			return;
-		}
-
 		// Fetch all the bids related to this auctionItem
 
-		const bidsResponse = await client.send(
+		const bidsResponse = await docClient.send(
 			new QueryCommand({
 				TableName: TABLE_NAME,
 				KeyConditionExpression: 'PK = :pk AND begins_with(SK, :bidPrefix)',
 				ExpressionAttributeValues: {
-					':pk': { S: `AUCTION#${auctionId}` },
-					':bidPrefix': { S: 'BID#' },
+					':pk': `AUCTION#${auctionId}`,
+					':bidPrefix': 'BID#',
 				},
 				ConsistentRead: false,
 			}),
 		);
 
 		const bids = (bidsResponse.Items ?? []).map((bidItem) => ({
-			bidId: bidItem.SK.S!,
-			bidderId: bidItem.bidderId.S!,
-			amount: Number(bidItem.amount.N),
-			placedAt: bidItem.createdAt.S!,
+			bidId: bidItem.SK,
+			bidderId: bidItem.bidderId,
+			amount: bidItem.amount,
+			placedAt: bidItem.createdAt,
 		}));
 
 		// Derive winner (pure functions)
@@ -124,10 +116,12 @@ export const handler = async (event: AuctionClosedEvent, context: any) => {
 			s3Key,
 			requestId: context.awsRequestId,
 		});
-	} catch (err) {
+	} catch (err: any) {
 		logger('ERROR', 'Failed to generate audit', {
 			auctionId,
-			reason: err,
+			errorName: err?.name,
+			errorMessage: err?.message,
+			stack: err?.stack,
 		});
 	}
 };
