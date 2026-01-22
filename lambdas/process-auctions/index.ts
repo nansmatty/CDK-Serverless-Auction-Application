@@ -1,10 +1,11 @@
-import { DynamoDBClient, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
 import { putMetric } from '../_shared/metrics';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
 const eventBridge = new EventBridgeClient({});
 const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 
@@ -39,38 +40,42 @@ export const handler = async (event: any, context: any) => {
 		});
 
 		for (const item of auctionsList.Items) {
-			const pk = item.PK.S!;
-			const sk = item.SK.S!;
+			const pk = item.PK;
+			const sk = item.SK;
 			const auctionId = item.auctionId.S!;
 
 			try {
-				const closeAuctionCommand = new UpdateItemCommand({
+				const closeAuctionCommand = new UpdateCommand({
 					TableName: TABLE_NAME,
 					Key: {
-						PK: { S: pk },
-						SK: { S: sk },
+						PK: pk,
+						SK: sk,
 					},
-					UpdateExpression: `SET #status = :closed, #updatedTime = :now, GSI1PK = :closedStatus`,
+					UpdateExpression: 'SET #status = :closed, #updatedTime = :now, GSI1PK = :closedStatus',
 					ConditionExpression: '#status = :open',
 					ExpressionAttributeNames: {
 						'#status': 'status',
 						'#updatedTime': 'updatedAt',
 					},
 					ExpressionAttributeValues: {
-						':closed': { S: 'CLOSED' },
-						':now': { N: now.toString() },
-						':closedStatus': { S: 'STATUS#CLOSED' },
-						':open': { S: 'OPEN' },
+						':closed': 'CLOSED',
+						':now': now,
+						':closedStatus': 'STATUS#CLOSED',
+						':open': 'OPEN',
 					},
-					ReturnValues: 'ALL_NEW',
 				});
 
-				await client.send(closeAuctionCommand);
+				await docClient.send(closeAuctionCommand);
 			} catch (err: any) {
 				if (err.name === 'ConditionalCheckFailedException') {
 					continue;
 				}
-				logger('ERROR', 'Failed to close auction', { pk, reason: err });
+				logger('ERROR', 'Failed to close auction', {
+					pk,
+					errorName: err?.name,
+					errorMessage: err?.message,
+					errorStack: err?.stack,
+				});
 				continue;
 			}
 
