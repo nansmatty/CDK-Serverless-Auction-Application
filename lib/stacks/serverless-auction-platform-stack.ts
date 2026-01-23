@@ -28,7 +28,9 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		const auctionById = auctionResources.addResource('{auctionId}');
 		const bidResource = auctionById.addResource('bid');
 
+		// Authention URL Paths
 		const signup = authResources.addResource('signup');
+		const verify = authResources.addResource('verify');
 
 		// list of external function which grants or special features
 		auctionsLambdas.grantOperationalPublishing();
@@ -48,6 +50,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 
 		// Authentication lambdas integration with API Gateways creating paths
 		signup.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.userSignUpLambda));
+		verify.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.resendOTPLambda));
 
 		// Granting permissions to dynamodb table depending on auctionsLambdas requirement
 		table.auctionTable.grantWriteData(auctionsLambdas.createAuctionLambda);
@@ -57,6 +60,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		table.auctionTable.grantReadWriteData(auctionsLambdas.processAuctionsLambda);
 
 		table.authTable.grantReadWriteData(authLambdas.userSignUpLambda);
+		table.authTable.grantReadWriteData(authLambdas.resendOTPLambda);
 
 		// Step Function and event-bridge
 		new AuctionScheduler(this, 'AuctionCloseSchedule', { processLambdaFunction: auctionsLambdas.processAuctionsLambda });
