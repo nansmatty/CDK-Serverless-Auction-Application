@@ -1,7 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { logger } from '../../auctions-lambdas/_shared/logger';
-import { AuthUtils } from '../../utils/auth-utils-functions';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -10,19 +9,18 @@ const AUTH_TABLE = process.env.AUTH_TABLE;
 
 export const handler = async (event: any, context: any) => {
 	const body = JSON.parse(event.body || '{}');
-	const { email } = body;
+	const { email, code } = body;
 
-	if (!email || !email.includes('@')) {
-		return { statusCode: 400, body: JSON.stringify({ message: 'Invalid email' }) };
+	if (!email || !code) {
+		return { statusCode: 400, body: JSON.stringify({ message: 'Missing required fields' }) };
 	}
 
-	logger('INFO', 'Resend code request received', {
+	logger('INFO', 'Verify user request received', {
 		requestId: context.awsRequestId,
 		email,
 	});
 
 	const now = Date.now();
-	const code = AuthUtils.generateOTP();
 
 	try {
 		const dataCheck = await docClient.send(
@@ -59,6 +57,24 @@ export const handler = async (event: any, context: any) => {
 			};
 		}
 
+		if (new Date(userData.verificationCodeExpiresAt).getTime() < now) {
+			return {
+				statusCode: 400,
+				body: JSON.stringify({
+					message: 'Verification code expired. Please resend the code.',
+				}),
+			};
+		}
+
+		if (String(userData.verificationCode) !== String(code)) {
+			return {
+				statusCode: 400,
+				body: JSON.stringify({
+					message: 'Invalid verification code.',
+				}),
+			};
+		}
+
 		await docClient.send(
 			new UpdateCommand({
 				TableName: AUTH_TABLE,
@@ -66,29 +82,26 @@ export const handler = async (event: any, context: any) => {
 					PK: userData.PK,
 					SK: userData.SK,
 				},
-				UpdateExpression: 'SET verificationCode = :resendCode, verificationCodeExpiresAt = :expNow, updatedAt = :now',
+				UpdateExpression: `SET emailVerified = :verified, updatedAt = :now,
+          REMOVE verificationCodeExpiresAt, accountVerificationExpiresAt, verificationCode`,
 				ExpressionAttributeValues: {
-					':resendCode': code,
-					':expNow': new Date(now + 10 * 60 * 1000).toISOString(),
+					':verified': true,
 					':now': new Date(now).toISOString(),
 				},
 			}),
 		);
 
-		logger('INFO', 'Resend code successfully', {
+		logger('INFO', 'Verifying user successfully', {
 			email,
 			requestId: context.awsRequestId,
 		});
 
 		return {
-			statusCode: 201,
-			body: JSON.stringify({
-				email,
-				message: 'New OTP has been sent to your registered email.',
-			}),
+			statusCode: 200,
+			body: JSON.stringify({ message: 'Email verification successfully. Please login.' }),
 		};
 	} catch (err: any) {
-		logger('ERROR', 'Failed to resend the code', {
+		logger('ERROR', 'Failed to verify the user', {
 			email,
 			errorName: err?.name,
 			errorMessage: err?.message,
@@ -97,7 +110,7 @@ export const handler = async (event: any, context: any) => {
 
 		return {
 			statusCode: 500,
-			body: JSON.stringify({ message: 'Resend code failed' }),
+			body: JSON.stringify({ message: 'Verify user failed' }),
 		};
 	}
 };
