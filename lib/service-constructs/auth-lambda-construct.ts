@@ -11,6 +11,7 @@ interface AuthLambdasProps {
 export class AuthLambdas extends Construct {
 	public readonly userSignUpLambda: IFunction;
 	public readonly resendOTPLambda: IFunction;
+	public readonly verifyUserLambda: IFunction;
 
 	constructor(scope: Construct, id: string, props: AuthLambdasProps) {
 		super(scope, id);
@@ -30,6 +31,17 @@ export class AuthLambdas extends Construct {
 			runtime: Runtime.NODEJS_22_X,
 			entry: join(__dirname, '..', '..', 'auth-lambdas', 'resend-code', 'index.ts'),
 			handler: 'handler',
+			timeout: Duration.seconds(10),
+			environment: {
+				AUTH_TABLE: props.tableName,
+			},
+		});
+
+		this.verifyUserLambda = new NodejsFunction(this, 'VerifyUser', {
+			runtime: Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', '..', 'auth-lambdas', 'verify-user', 'index.ts'),
+			handler: 'handler',
+			timeout: Duration.seconds(10),
 			environment: {
 				AUTH_TABLE: props.tableName,
 			},
