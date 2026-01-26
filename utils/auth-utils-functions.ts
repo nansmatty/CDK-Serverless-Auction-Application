@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from './constant';
 
 export class AuthUtils {
 	static async generatePasswordHash(password: string): Promise<string> {
@@ -16,7 +17,7 @@ export class AuthUtils {
 
 	static accessCookie(isProd: boolean, accessToken: string) {
 		return [
-			`accessToken=${accessToken}`,
+			`${ACCESS_COOKIE_NAME}=${accessToken}`,
 			'HttpOnly',
 			'Path=/',
 			`Max-Age=${15 * 60}`, // 15 minutes
@@ -29,7 +30,7 @@ export class AuthUtils {
 
 	static refreshCookie(isProd: boolean, refreshToken: string) {
 		return [
-			`refreshToken=${refreshToken}`,
+			`${REFRESH_COOKIE_NAME}=${refreshToken}`,
 			'HttpOnly',
 			'Path=/auth/refresh',
 			`Max-Age=${7 * 24 * 60 * 60}`, // 7 days
