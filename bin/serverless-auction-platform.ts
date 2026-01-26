@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core';
 import { ServerlessAuctionPlatformStack } from '../lib/stacks/serverless-auction-platform-stack';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 const app = new cdk.App();
 new ServerlessAuctionPlatformStack(app, 'ServerlessAuctionPlatformStack', {
