@@ -73,6 +73,8 @@ export const handler = async (event: any, context: any) => {
 
 		const refreshToken = JwtUtils.generateRefreshToken({
 			sub: userData.PK,
+			email: userData.email,
+			role: userData.role,
 		});
 
 		const isProd = NODE_ENV === 'production';
@@ -83,11 +85,15 @@ export const handler = async (event: any, context: any) => {
 		logger('INFO', 'Signin user successfully', {
 			email,
 			requestId: context.awsRequestId,
+			accessCookie,
+			refreshCookie,
 		});
 
 		return {
 			statusCode: 200,
-			headers: { 'Set-Cookie': [accessCookie, refreshCookie] },
+			multiValueHeaders: {
+				'Set-Cookie': [refreshCookie, accessCookie],
+			},
 			body: JSON.stringify({ message: 'Signin successfully.' }),
 		};
 	} catch (err: any) {

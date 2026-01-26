@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 const NODE_ENV = process.env.NODE_ENV || 'dev';
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
-export const handler = async (event: any, context: any) => {
+export const handler = async (event: any) => {
 	logger('INFO', 'Refresh token hit');
 
 	try {
@@ -29,12 +29,12 @@ export const handler = async (event: any, context: any) => {
 			return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
 		}
 
-		// Verify refresh token
 		const payload: any = jwt.verify(refreshToken, REFRESH_SECRET);
 
-		// Issue new access token
 		const accessToken = JwtUtils.generateAccessToken({
 			sub: payload.sub,
+			email: payload.email,
+			role: payload.role,
 		});
 
 		const isProd = NODE_ENV === 'production';
@@ -47,8 +47,8 @@ export const handler = async (event: any, context: any) => {
 			},
 			body: JSON.stringify({ message: 'Token refreshed' }),
 		};
-	} catch (err) {
-		logger('ERROR', 'Refresh token failed', { error: err });
+	} catch (err: any) {
+		logger('ERROR', 'Refresh token failed', { errorName: err?.name });
 		return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
 	}
 };

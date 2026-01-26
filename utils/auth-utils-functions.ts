@@ -32,7 +32,7 @@ export class AuthUtils {
 		return [
 			`${REFRESH_COOKIE_NAME}=${refreshToken}`,
 			'HttpOnly',
-			'Path=/auth/refresh',
+			'Path=/',
 			`Max-Age=${7 * 24 * 60 * 60}`, // 7 days
 			isProd ? 'Secure' : '',
 			'SameSite=Lax',
