@@ -13,6 +13,8 @@ export class AuthLambdas extends Construct {
 	public readonly resendOTPLambda: IFunction;
 	public readonly verifyUserLambda: IFunction;
 	public readonly signinUserLambda: IFunction;
+	public readonly refreshTokenLambda: IFunction;
+	public readonly signoutUserLambda: IFunction;
 
 	constructor(scope: Construct, id: string, props: AuthLambdasProps) {
 		super(scope, id);
@@ -57,6 +59,25 @@ export class AuthLambdas extends Construct {
 				NODE_ENV: process.env.NODE_ENV!,
 				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 				JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET!,
+			},
+		});
+
+		this.refreshTokenLambda = new NodejsFunction(this, 'RefreshToken', {
+			runtime: Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', '..', 'auth-lambdas', 'refresh', 'index.ts'),
+			handler: 'handler',
+			environment: {
+				NODE_ENV: process.env.NODE_ENV!,
+				JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET!,
+			},
+		});
+
+		this.signoutUserLambda = new NodejsFunction(this, 'SignoutUser', {
+			runtime: Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', '..', 'auth-lambdas', 'logout', 'index.ts'),
+			handler: 'handler',
+			environment: {
+				NODE_ENV: process.env.NODE_ENV!,
 			},
 		});
 	}

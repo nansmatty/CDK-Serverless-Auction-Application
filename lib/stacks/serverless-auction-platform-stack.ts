@@ -34,6 +34,8 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		const resendCode = authResources.addResource('resend-code');
 		const verifyUser = authResources.addResource('verify-user');
 		const signin = authResources.addResource('signin');
+		const refresh = authResources.addResource('refresh');
+		const signout = authResources.addResource('signout');
 
 		// list of external function which grants or special features
 		auctionsLambdas.grantOperationalPublishing();
@@ -56,6 +58,8 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		resendCode.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.resendOTPLambda));
 		verifyUser.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.verifyUserLambda));
 		signin.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.signinUserLambda));
+		refresh.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.refreshTokenLambda));
+		signout.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.signoutUserLambda));
 
 		// Granting permissions to dynamodb table depending on auctionsLambdas requirement
 		table.auctionTable.grantWriteData(auctionsLambdas.createAuctionLambda);
