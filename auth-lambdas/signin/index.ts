@@ -23,6 +23,11 @@ export const handler = async (event: any, context: any) => {
 		email,
 	});
 
+	logger('INFO', 'ENV CHECK', {
+		hasAccessSecret: !!process.env.JWT_ACCESS_SECRET,
+		hasRefreshSecret: !!process.env.JWT_REFRESH_SECRET,
+	});
+
 	try {
 		const dataCheck = await docClient.send(
 			new QueryCommand({
