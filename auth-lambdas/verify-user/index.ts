@@ -82,7 +82,7 @@ export const handler = async (event: any, context: any) => {
 					PK: userData.PK,
 					SK: userData.SK,
 				},
-				UpdateExpression: `SET emailVerified = :verified, updatedAt = :now,
+				UpdateExpression: `SET emailVerified = :verified, updatedAt = :now
           REMOVE verificationCodeExpiresAt, accountVerificationExpiresAt, verificationCode`,
 				ExpressionAttributeValues: {
 					':verified': true,
