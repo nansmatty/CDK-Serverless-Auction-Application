@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
+import { ForbiddenError } from '../auctions-lambdas/_shared/errors/ForbiddenError';
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 
 export interface AuthContext {
 	userId: string;
-	email?: string;
-	role?: string;
+	email: string;
+	role: string;
 }
 
 export function authenticate(event: any): AuthContext {
@@ -38,5 +39,11 @@ export function authenticate(event: any): AuthContext {
 		};
 	} catch (error) {
 		throw new Error('UNAUTHORIZED');
+	}
+}
+
+export function requireAdmin(user: AuthContext) {
+	if (user.role !== 'ADMIN') {
+		throw new ForbiddenError('Admin access required');
 	}
 }
