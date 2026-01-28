@@ -2,6 +2,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
 import { DynamoDBDocumentClient, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { randomUUID } from 'crypto';
+import { authenticate } from '../../utils/auth-middleware';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -10,11 +11,14 @@ const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 
 export const handler = async (event: any, context: any) => {
 	const auctionId = event.pathParameters?.auctionId;
+
+	const { userId } = authenticate(event);
+
 	const body = JSON.parse(event.body || '{}');
 
-	const { bidderId, amount } = body;
+	const { amount } = body;
 
-	if (!auctionId || !bidderId || typeof amount !== 'number') {
+	if (!auctionId || typeof amount !== 'number') {
 		return {
 			statusCode: 400,
 			body: JSON.stringify({ message: 'Missing required fields' }),
@@ -29,7 +33,7 @@ export const handler = async (event: any, context: any) => {
 
 	logger('INFO', 'Place bid attempt', {
 		auctionId,
-		bidderId,
+		userId,
 		amount,
 		requestId: context.awsRequestId,
 	});
@@ -52,7 +56,7 @@ export const handler = async (event: any, context: any) => {
 							ExpressionAttributeNames: { '#status': 'status' },
 							ExpressionAttributeValues: {
 								':amount': amount,
-								':bidderId': bidderId,
+								':bidderId': userId,
 								':open': 'OPEN',
 								':now': now,
 							},
@@ -65,7 +69,7 @@ export const handler = async (event: any, context: any) => {
 								PK: `AUCTION#${auctionId}`,
 								SK: `BID#${now}#${bidId}`,
 								bidId,
-								bidderId,
+								userId,
 								amount,
 								recordExpiresAt: timeToLive,
 								createdAt: now,
@@ -84,7 +88,7 @@ export const handler = async (event: any, context: any) => {
 	} catch (err: any) {
 		logger('WARN', 'Bid rejected', {
 			auctionId,
-			bidderId,
+			userId,
 			amount,
 			reason: err,
 		});

@@ -2,14 +2,19 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
 import { randomUUID } from 'crypto';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
+import { authenticate, requireAdmin } from '../../utils/auth-middleware';
 
 const client = new DynamoDBClient({});
+
 const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 
 export const handler = async (event: any, context: any) => {
 	logger('INFO', 'Create auction request received.', {
 		requestId: context.awsRequestId,
 	});
+
+	const user = authenticate(event);
+	requireAdmin(user);
 
 	const body = JSON.parse(event.body || '{}');
 	const { title, startingPrice, durationMinutes, description } = body;

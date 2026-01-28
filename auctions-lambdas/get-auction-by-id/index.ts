@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { logger } from '../_shared/logger';
+import { authenticate } from '../../utils/auth-middleware';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -17,6 +18,8 @@ export const handler = async (event: any, context: any) => {
 		};
 	}
 
+	authenticate(event);
+
 	try {
 		const auctionItem = await docClient.send(
 			new GetCommand({
@@ -25,7 +28,7 @@ export const handler = async (event: any, context: any) => {
 					PK: `AUCTION#${auctionId}`,
 					SK: 'AUCTION',
 				},
-			})
+			}),
 		);
 
 		if (!auctionItem.Item) {

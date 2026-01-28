@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { logger } from '../_shared/logger';
+import { authenticate } from '../../utils/auth-middleware';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -11,6 +12,8 @@ export const handler = async (event: any, context: any) => {
 	logger('INFO', 'Get all auction lambda function runned', {
 		requestId: context.awsRequestId,
 	});
+
+	authenticate(event);
 
 	const now = Math.floor(Date.now() / 1000);
 
