@@ -35,6 +35,7 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
+				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 			},
 		});
 
@@ -44,6 +45,7 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
+				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 			},
 		});
 
@@ -62,6 +64,7 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
+				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 			},
 		});
 
@@ -71,6 +74,7 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
+				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 			},
 		});
 	}
