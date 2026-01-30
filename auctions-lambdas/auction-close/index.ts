@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { logger } from '../_shared/logger';
 import { authenticate, requireAdmin } from '../../utils/auth-middleware';
 
@@ -11,7 +11,7 @@ const TABLE_NAME = process.env.AUCTIONS_TABLE!;
 export const handler = async (event: any, context: any) => {
 	const auctionId = event.pathParameters?.auctionId;
 
-	logger('INFO', 'Delete auction request received.', {
+	logger('INFO', 'Manually close auction request received.', {
 		requestId: context.awsRequestId,
 		auctionId,
 	});
@@ -25,6 +25,8 @@ export const handler = async (event: any, context: any) => {
 
 	const user = authenticate(event);
 	requireAdmin(user);
+
+	const now = Math.floor(Date.now() / 1000);
 
 	try {
 		const auctionItem = await docClient.send(
@@ -49,29 +51,34 @@ export const handler = async (event: any, context: any) => {
 		if (auction.status !== 'OPEN') {
 			return {
 				statusCode: 400,
-				body: JSON.stringify({ message: 'Only open auctions can be deleted' }),
+				body: JSON.stringify({ message: 'Only open auctions can be closed' }),
 			};
 		}
 
-		if (auction.highestBidderId) {
+		if (auction.endsAt <= now) {
 			return {
 				statusCode: 400,
-				body: JSON.stringify({ message: 'Cannot delete an auction with bids' }),
+				body: JSON.stringify({ message: 'Only auctions that yet to be end can be closed' }),
 			};
 		}
 
 		await docClient.send(
-			new DeleteCommand({
+			new UpdateCommand({
 				TableName: TABLE_NAME,
 				Key: {
 					PK: `AUCTION#${auctionId}`,
 					SK: 'AUCTION',
 				},
-				ConditionExpression: '#status = :open AND attribute_not_exists(highestBidderId)',
+				UpdateExpression: 'SET #status = :closed, #updatedTime = :now, GSI1PK = :closedStatus',
+				ConditionExpression: '#status = :open',
 				ExpressionAttributeNames: {
 					'#status': 'status',
+					'#updatedTime': 'updatedAt',
 				},
 				ExpressionAttributeValues: {
+					':closed': 'CLOSED',
+					':now': now,
+					':closedStatus': 'STATUS#CLOSED',
 					':open': 'OPEN',
 				},
 			}),
@@ -79,10 +86,10 @@ export const handler = async (event: any, context: any) => {
 
 		return {
 			statusCode: 200,
-			body: JSON.stringify({ message: 'Deleting the auction successful' }),
+			body: JSON.stringify({ message: 'Closing the auction successful' }),
 		};
 	} catch (err) {
-		logger('ERROR', 'Failed to delete the auction', {
+		logger('ERROR', 'Failed to close the auction', {
 			auctionId,
 			reason: err,
 		});
