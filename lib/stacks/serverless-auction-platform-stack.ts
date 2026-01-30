@@ -15,7 +15,10 @@ export class ServerlessAuctionPlatformStack extends Stack {
 
 		// AWS Service Defination or Construct
 		const table = new DynamoTables(this, 'DynamoTables');
-		const auctionsLambdas = new AuctionLambdas(this, 'AuctionLambdas', { tableName: table.auctionTable.tableName });
+		const auctionsLambdas = new AuctionLambdas(this, 'AuctionLambdas', {
+			tableName: table.auctionTable.tableName,
+			authTableName: table.authTable.tableName,
+		});
 		const authLambdas = new AuthLambdas(this, 'AuthLambdas', { tableName: table.authTable.tableName });
 		const auditBucket = new AuditS3Bucket(this, 'AuctionAuditBucket', { environment: 'dev' });
 
@@ -29,6 +32,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		const auctionById = auctionResources.addResource('{auctionId}');
 		const bidResource = auctionById.addResource('bid');
 		const closeResource = auctionById.addResource('close');
+		const resultResource = auctionById.addResource('result');
 
 		// Authentication URL Paths
 		const signup = authResources.addResource('signup');
@@ -56,6 +60,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		bidResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.placeBidLambda));
 		closeResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.closeAuctionLambda));
 		auctionById.addMethod('PUT', new apiGateway.LambdaIntegration(auctionsLambdas.updateAuctionLambda));
+		resultResource.addMethod('GET', new apiGateway.LambdaIntegration(auctionsLambdas.resultAuctionLambda));
 
 		// Authentication lambdas integration with API Gateways creating paths
 		signup.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.userSignUpLambda));
@@ -74,11 +79,13 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		table.auctionTable.grantReadWriteData(auctionsLambdas.deleteAuctionLambda);
 		table.auctionTable.grantReadWriteData(auctionsLambdas.closeAuctionLambda);
 		table.auctionTable.grantReadWriteData(auctionsLambdas.updateAuctionLambda);
+		table.auctionTable.grantReadData(auctionsLambdas.resultAuctionLambda);
 
 		table.authTable.grantReadWriteData(authLambdas.userSignUpLambda);
 		table.authTable.grantReadWriteData(authLambdas.resendOTPLambda);
 		table.authTable.grantReadWriteData(authLambdas.verifyUserLambda);
 		table.authTable.grantReadData(authLambdas.signinUserLambda);
+		table.authTable.grantReadData(auctionsLambdas.resultAuctionLambda);
 
 		// Step Function and event-bridge
 		new AuctionScheduler(this, 'AuctionCloseSchedule', { processLambdaFunction: auctionsLambdas.processAuctionsLambda });
