@@ -55,6 +55,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		auctionById.addMethod('DELETE', new apiGateway.LambdaIntegration(auctionsLambdas.deleteAuctionLambda));
 		bidResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.placeBidLambda));
 		closeResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.closeAuctionLambda));
+		auctionById.addMethod('PUT', new apiGateway.LambdaIntegration(auctionsLambdas.updateAuctionLambda));
 
 		// Authentication lambdas integration with API Gateways creating paths
 		signup.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.userSignUpLambda));
@@ -72,6 +73,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		table.auctionTable.grantReadWriteData(auctionsLambdas.processAuctionsLambda);
 		table.auctionTable.grantReadWriteData(auctionsLambdas.deleteAuctionLambda);
 		table.auctionTable.grantReadWriteData(auctionsLambdas.closeAuctionLambda);
+		table.auctionTable.grantReadWriteData(auctionsLambdas.updateAuctionLambda);
 
 		table.authTable.grantReadWriteData(authLambdas.userSignUpLambda);
 		table.authTable.grantReadWriteData(authLambdas.resendOTPLambda);
