@@ -11,9 +11,9 @@ const AUTH_TABLE = process.env.AUTH_TABLE;
 
 export const handler = async (event: any, context: any) => {
 	const body = JSON.parse(event.body || '{}');
-	const { email, password } = body;
+	const { name, email, password } = body;
 
-	if (!email || !password) {
+	if (!name || !email || !password) {
 		return {
 			statusCode: 400,
 			body: JSON.stringify({ message: 'Missing required fields' }),
@@ -128,6 +128,7 @@ export const handler = async (event: any, context: any) => {
 				SK: 'PROFILE',
 				GSI1PK: `EMAIL#${email}`,
 				GSI1SK: `PROFILE`,
+				name,
 				email,
 				password: passwordHash,
 				role: 'USER',
