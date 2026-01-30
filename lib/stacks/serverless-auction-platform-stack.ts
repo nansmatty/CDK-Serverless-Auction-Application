@@ -51,6 +51,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		auctionResources.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.createAuctionLambda));
 		auctionResources.addMethod('GET', new apiGateway.LambdaIntegration(auctionsLambdas.getAllAuctionsLambda));
 		auctionById.addMethod('GET', new apiGateway.LambdaIntegration(auctionsLambdas.getAuctionByIdLambda));
+		auctionById.addMethod('DELETE', new apiGateway.LambdaIntegration(auctionsLambdas.deleteAuctionLambda));
 		bidResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.placeBidLambda));
 
 		// Authentication lambdas integration with API Gateways creating paths

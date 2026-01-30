@@ -15,6 +15,7 @@ export class AuctionLambdas extends Construct {
 	public readonly getAuctionByIdLambda: lambda.IFunction;
 	public readonly placeBidLambda: lambda.IFunction;
 	public readonly processAuctionsLambda: lambda.IFunction;
+	public readonly deleteAuctionLambda: lambda.IFunction;
 
 	constructor(scope: Construct, id: string, props: AuctionLambdasProps) {
 		super(scope, id);
@@ -71,6 +72,16 @@ export class AuctionLambdas extends Construct {
 		this.getAllAuctionsLambda = new NodejsFunction(this, 'GetAllAuctions', {
 			runtime: lambda.Runtime.NODEJS_22_X,
 			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'get-all-auctions', 'index.ts'),
+			handler: 'handler',
+			environment: {
+				AUCTIONS_TABLE: props.tableName,
+				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
+			},
+		});
+
+		this.deleteAuctionLambda = new NodejsFunction(this, 'DeleteAuctionLambda', {
+			runtime: lambda.Runtime.NODEJS_22_X,
+			entry: join(__dirname, '..', '..', 'auctions-lambdas', 'delete-auction', 'index.ts'),
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
