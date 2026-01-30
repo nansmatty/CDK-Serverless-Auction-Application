@@ -28,6 +28,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		// Auction URL Paths
 		const auctionById = auctionResources.addResource('{auctionId}');
 		const bidResource = auctionById.addResource('bid');
+		const closeResource = auctionById.addResource('close');
 
 		// Authentication URL Paths
 		const signup = authResources.addResource('signup');
@@ -53,6 +54,7 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		auctionById.addMethod('GET', new apiGateway.LambdaIntegration(auctionsLambdas.getAuctionByIdLambda));
 		auctionById.addMethod('DELETE', new apiGateway.LambdaIntegration(auctionsLambdas.deleteAuctionLambda));
 		bidResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.placeBidLambda));
+		closeResource.addMethod('POST', new apiGateway.LambdaIntegration(auctionsLambdas.closeAuctionLambda));
 
 		// Authentication lambdas integration with API Gateways creating paths
 		signup.addMethod('POST', new apiGateway.LambdaIntegration(authLambdas.userSignUpLambda));
@@ -68,6 +70,8 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		table.auctionTable.grantReadData(auctionsLambdas.getAllAuctionsLambda);
 		table.auctionTable.grantWriteData(auctionsLambdas.placeBidLambda);
 		table.auctionTable.grantReadWriteData(auctionsLambdas.processAuctionsLambda);
+		table.auctionTable.grantReadWriteData(auctionsLambdas.deleteAuctionLambda);
+		table.auctionTable.grantReadWriteData(auctionsLambdas.closeAuctionLambda);
 
 		table.authTable.grantReadWriteData(authLambdas.userSignUpLambda);
 		table.authTable.grantReadWriteData(authLambdas.resendOTPLambda);
