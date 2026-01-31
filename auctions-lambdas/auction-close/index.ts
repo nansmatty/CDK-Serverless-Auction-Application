@@ -89,37 +89,41 @@ export const handler = async (event: any, context: any) => {
 
 		logger('INFO', 'Getting the winner data after closing the auction');
 
-		const winnerUserData = await docClient.send(
-			new GetCommand({
-				TableName: AUTH_TABLE,
-				Key: {
-					PK: `USER#${auction.highestBidderId}`,
-					SK: 'PROFILE',
-				},
-			}),
-		);
-
-		const winner = winnerUserData.Item
-			? {
-					name: winnerUserData.Item.name,
-					userId: auction.highestBidderId,
-					email: winnerUserData.Item.email,
-				}
-			: null;
-
-		logger('INFO', 'Sending the SQS event message in close auction lambda');
-
-		await sqs.send(
-			new SendMessageCommand({
-				QueueUrl: process.env.AUCTION_CLOSED_QUEUE_URL!,
-				MessageBody: JSON.stringify({
-					auctionId,
-					finalPrice: auction.highestBidAmount ?? null,
-					winnerEmail: winner?.email ?? null,
-					winnerName: winner?.name ?? 'Hello User',
+		if (!auction.highestBidderId) {
+			logger('INFO', 'Auction closed with no bids, skipping notification', { auctionId });
+		} else {
+			const winnerUserData = await docClient.send(
+				new GetCommand({
+					TableName: AUTH_TABLE,
+					Key: {
+						PK: `${auction.highestBidderId}`,
+						SK: 'PROFILE',
+					},
 				}),
-			}),
-		);
+			);
+
+			const winner = winnerUserData.Item
+				? {
+						name: winnerUserData.Item.name,
+						userId: auction.highestBidderId,
+						email: winnerUserData.Item.email,
+					}
+				: null;
+
+			logger('INFO', 'Sending the SQS event message in close auction lambda');
+
+			await sqs.send(
+				new SendMessageCommand({
+					QueueUrl: process.env.AUCTION_CLOSED_QUEUE_URL!,
+					MessageBody: JSON.stringify({
+						auctionId,
+						finalPrice: auction.highestBidAmount ?? null,
+						winnerEmail: winner?.email ?? null,
+						winnerName: winner?.name ?? 'Hello User',
+					}),
+				}),
+			);
+		}
 
 		return {
 			statusCode: 200,

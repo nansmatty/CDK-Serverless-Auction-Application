@@ -76,7 +76,7 @@ export const handler = async (event: any, context: any) => {
 						new GetCommand({
 							TableName: AUTH_TABLE,
 							Key: {
-								PK: `USER#${item.highestBidderId}`,
+								PK: `${item.highestBidderId}`,
 								SK: 'PROFILE',
 							},
 						}),
