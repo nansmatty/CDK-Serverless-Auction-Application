@@ -8,7 +8,7 @@ import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 
 interface NotificationSESProps {
-	queue: sqs.Queue;
+	auctionResultQueue: sqs.Queue;
 }
 
 export class NotificationSES extends Construct {
@@ -25,7 +25,7 @@ export class NotificationSES extends Construct {
 		});
 
 		this.notificationLambda.addEventSource(
-			new SqsEventSource(props.queue, {
+			new SqsEventSource(props.auctionResultQueue, {
 				batchSize: 1,
 			}),
 		);

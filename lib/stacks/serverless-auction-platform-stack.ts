@@ -95,8 +95,8 @@ export class ServerlessAuctionPlatformStack extends Stack {
 
 		// SES/SQS and attached lambda to that
 		const notificationQueue = new NotificationQueue(this, 'NotificationQueue', { environment: 'dev' });
-		const notificationSes = new NotificationSES(this, 'NotificationSes', {
-			queue: notificationQueue.auctionClosedQueue,
+		new NotificationSES(this, 'NotificationSES', {
+			auctionResultQueue: notificationQueue.auctionClosedQueue,
 		});
 	}
 }
