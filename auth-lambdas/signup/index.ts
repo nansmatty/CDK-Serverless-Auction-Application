@@ -11,7 +11,7 @@ const AUTH_TABLE = process.env.AUTH_TABLE;
 
 export const handler = async (event: any, context: any) => {
 	const body = JSON.parse(event.body || '{}');
-	const { name, email, password } = body;
+	const { name, email, password, role } = body;
 
 	if (!name || !email || !password) {
 		return {
@@ -22,6 +22,10 @@ export const handler = async (event: any, context: any) => {
 
 	if (!email.includes('@')) {
 		return { statusCode: 400, body: JSON.stringify({ message: 'Invalid email' }) };
+	}
+
+	if (role && role !== 'USER' && role !== 'ADMIN') {
+		return { statusCode: 400, body: JSON.stringify({ message: 'Invalid role specified' }) };
 	}
 
 	logger('INFO', 'Signup request received', {
@@ -131,7 +135,7 @@ export const handler = async (event: any, context: any) => {
 				name,
 				email,
 				password: passwordHash,
-				role: 'USER',
+				role: role ?? 'USER',
 				emailVerified: false,
 				verificationCode: code,
 				verificationCodeExpiresAt: new Date(now + 10 * 60 * 1000).toISOString(),
