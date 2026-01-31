@@ -13,11 +13,16 @@ export class NotificationQueue extends Construct {
 		super(scope, id);
 
 		const isProd = props.environment === 'prod';
+		const auctionClosedDLQ = new sqs.Queue(this, 'AuctionClosedDLQ');
 
 		this.auctionClosedQueue = new sqs.Queue(this, 'AuctionClosedQueue', {
 			visibilityTimeout: Duration.seconds(30),
 			retentionPeriod: Duration.days(4),
 			removalPolicy: isProd ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+			deadLetterQueue: {
+				queue: auctionClosedDLQ,
+				maxReceiveCount: 5,
+			},
 		});
 	}
 }

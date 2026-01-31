@@ -22,6 +22,9 @@ export class NotificationSES extends Construct {
 			entry: join(__dirname, '..', '..', 'notifications-lambdas', 'auction-notify', 'index.ts'),
 			handler: 'handler',
 			timeout: Duration.seconds(30),
+			environment: {
+				SENDER_EMAIL: process.env.SENDER_EMAIL!,
+			},
 		});
 
 		this.notificationLambda.addEventSource(
