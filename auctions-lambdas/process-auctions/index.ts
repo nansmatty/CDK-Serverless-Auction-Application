@@ -2,25 +2,25 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { logger } from '../_shared/logger';
 import { putMetric } from '../_shared/metrics';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
-import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 const eventBridge = new EventBridgeClient({});
-const TABLE_NAME = process.env.AUCTIONS_TABLE!;
+const sqs = new SQSClient({});
+
+const AUCTIONS_TABLE = process.env.AUCTIONS_TABLE!;
+const AUTH_TABLE = process.env.AUTH_TABLE!;
 
 export const handler = async (event: any, context: any) => {
 	const now = Math.floor(Date.now() / 1000);
 	const nowIso = new Date().toISOString();
 
-	// TODO: Replace Scan with GSI query on (status, endTime) when scale increases
-
-	// TODO: Handle pagination using LastEvaluatedKey when auction volume grows
-
 	try {
 		const auctionsList = await client.send(
 			new QueryCommand({
-				TableName: TABLE_NAME,
+				TableName: AUCTIONS_TABLE,
 				IndexName: 'GSI1',
 				KeyConditionExpression: 'GSI1PK = :status AND GSI1SK <= :now',
 				ExpressionAttributeValues: { ':status': 'STATUS#OPEN', ':now': now },
@@ -46,7 +46,7 @@ export const handler = async (event: any, context: any) => {
 
 			try {
 				const closeAuctionCommand = new UpdateCommand({
-					TableName: TABLE_NAME,
+					TableName: AUCTIONS_TABLE,
 					Key: {
 						PK: pk,
 						SK: sk,
@@ -66,6 +66,44 @@ export const handler = async (event: any, context: any) => {
 				});
 
 				await docClient.send(closeAuctionCommand);
+
+				logger('INFO', 'Getting the winner data after closing the auction');
+
+				if (!item.highestBidderId) {
+					logger('INFO', 'Auction closed with no bids, skipping notification', { auctionId });
+				} else {
+					const winnerUserData = await docClient.send(
+						new GetCommand({
+							TableName: AUTH_TABLE,
+							Key: {
+								PK: `USER#${item.highestBidderId}`,
+								SK: 'PROFILE',
+							},
+						}),
+					);
+
+					const winner = winnerUserData.Item
+						? {
+								name: winnerUserData.Item.name,
+								userId: item.highestBidderId,
+								email: winnerUserData.Item.email,
+							}
+						: null;
+
+					logger('INFO', 'Sending the SQS event message in close auction lambda');
+
+					await sqs.send(
+						new SendMessageCommand({
+							QueueUrl: process.env.AUCTION_CLOSED_QUEUE_URL!,
+							MessageBody: JSON.stringify({
+								auctionId,
+								finalPrice: item.highestBidAmount ?? null,
+								winnerEmail: winner?.email ?? null,
+								winnerName: winner?.name ?? 'Hello User',
+							}),
+						}),
+					);
+				}
 			} catch (err: any) {
 				if (err.name === 'ConditionalCheckFailedException') {
 					continue;
