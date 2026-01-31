@@ -98,5 +98,11 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		new NotificationSES(this, 'NotificationSES', {
 			auctionResultQueue: notificationQueue.auctionClosedQueue,
 		});
+
+		// Attaching env variables directly to specific lambda
+		auctionsLambdas.closeAuctionLambda.addEnvironment('AUCTION_CLOSED_QUEUE_URL', notificationQueue.auctionClosedQueue.queueUrl);
+
+		// Attaching SQS SendMessage permission to lambda
+		notificationQueue.auctionClosedQueue.grantSendMessages(auctionsLambdas.closeAuctionLambda);
 	}
 }

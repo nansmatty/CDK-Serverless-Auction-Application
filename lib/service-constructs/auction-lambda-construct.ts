@@ -17,7 +17,7 @@ export class AuctionLambdas extends Construct {
 	public readonly placeBidLambda: lambda.IFunction;
 	public readonly processAuctionsLambda: lambda.IFunction;
 	public readonly deleteAuctionLambda: lambda.IFunction;
-	public readonly closeAuctionLambda: lambda.IFunction;
+	public readonly closeAuctionLambda: NodejsFunction; // Had to change because want to add lambda specific env
 	public readonly updateAuctionLambda: lambda.IFunction;
 	public readonly resultAuctionLambda: lambda.IFunction;
 
@@ -89,7 +89,6 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
-				AUTH_TABLE: props.authTableName,
 				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 			},
 		});
@@ -100,6 +99,7 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
+				AUTH_TABLE: props.authTableName,
 				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 			},
 		});
@@ -120,6 +120,7 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
+				AUTH_TABLE: props.authTableName,
 				JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET!,
 			},
 		});
