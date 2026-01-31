@@ -8,6 +8,8 @@ import { AuditS3Bucket } from '../service-constructs/s3-bucket-construct';
 import { GenerateAuditFunction } from '../functions-construct/generate-audit-function-construct';
 import { AuctionClosedRule } from '../functions-construct/auction-closed-rule-construct';
 import { AuthLambdas } from '../service-constructs/auth-lambda-construct';
+import { NotificationQueue } from '../service-constructs/notification-sqs-construct';
+import { NotificationSES } from '../service-constructs/notification-ses-construct';
 
 export class ServerlessAuctionPlatformStack extends Stack {
 	constructor(scope: Construct, id: string, props?: StackProps) {
@@ -90,5 +92,11 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		// Step Function and event-bridge
 		new AuctionScheduler(this, 'AuctionCloseSchedule', { processLambdaFunction: auctionsLambdas.processAuctionsLambda });
 		new AuctionClosedRule(this, 'AuctionClosedRule', { targetLambda: auditLambda.generateAuditLambda });
+
+		// SES/SQS and attached lambda to that
+		const notificationQueue = new NotificationQueue(this, 'NotificationQueue', { environment: 'dev' });
+		const notificationSes = new NotificationSES(this, 'NotificationSes', {
+			queue: notificationQueue.auctionClosedQueue,
+		});
 	}
 }
