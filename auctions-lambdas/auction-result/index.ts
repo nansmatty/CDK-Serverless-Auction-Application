@@ -89,7 +89,7 @@ export const handler = async (event: any, context: any) => {
 			body: JSON.stringify({
 				auctionId,
 				title: auction.title,
-				finalPrice: auction.highestBid,
+				finalPrice: auction.highestBidAmount,
 				winner,
 				closedAt: auction.closedAt ?? auction.endsAt,
 			}),

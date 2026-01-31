@@ -2,11 +2,14 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { logger } from '../_shared/logger';
 import { authenticate, requireAdmin } from '../../utils/auth-middleware';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const sqs = new SQSClient({});
 
-const TABLE_NAME = process.env.AUCTIONS_TABLE!;
+const AUCTIONS_TABLE = process.env.AUCTIONS_TABLE!;
+const AUTH_TABLE = process.env.AUTH_TABLE!;
 
 export const handler = async (event: any, context: any) => {
 	const auctionId = event.pathParameters?.auctionId;
@@ -31,7 +34,7 @@ export const handler = async (event: any, context: any) => {
 	try {
 		const auctionItem = await docClient.send(
 			new GetCommand({
-				TableName: TABLE_NAME,
+				TableName: AUCTIONS_TABLE,
 				Key: {
 					PK: `AUCTION#${auctionId}`,
 					SK: 'AUCTION',
@@ -64,7 +67,7 @@ export const handler = async (event: any, context: any) => {
 
 		await docClient.send(
 			new UpdateCommand({
-				TableName: TABLE_NAME,
+				TableName: AUCTIONS_TABLE,
 				Key: {
 					PK: `AUCTION#${auctionId}`,
 					SK: 'AUCTION',
@@ -81,6 +84,40 @@ export const handler = async (event: any, context: any) => {
 					':closedStatus': 'STATUS#CLOSED',
 					':open': 'OPEN',
 				},
+			}),
+		);
+
+		logger('INFO', 'Getting the winner data after closing the auction');
+
+		const winnerUserData = await docClient.send(
+			new GetCommand({
+				TableName: AUTH_TABLE,
+				Key: {
+					PK: `USER#${auction.highestBidderId}`,
+					SK: 'PROFILE',
+				},
+			}),
+		);
+
+		const winner = winnerUserData.Item
+			? {
+					name: winnerUserData.Item.name,
+					userId: auction.highestBidderId,
+					email: winnerUserData.Item.email,
+				}
+			: null;
+
+		logger('INFO', 'Sending the SQS event message in close auction lambda');
+
+		await sqs.send(
+			new SendMessageCommand({
+				QueueUrl: process.env.AUCTION_CLOSED_QUEUE_URL!,
+				MessageBody: JSON.stringify({
+					auctionId,
+					finalPrice: auction.highestBidAmount ?? null,
+					winnerEmail: winner?.email ?? null,
+					winnerName: winner?.name ?? 'Hello User',
+				}),
 			}),
 		);
 
