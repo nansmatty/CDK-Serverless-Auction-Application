@@ -15,7 +15,7 @@ export class AuctionLambdas extends Construct {
 	public readonly getAllAuctionsLambda: lambda.IFunction;
 	public readonly getAuctionByIdLambda: lambda.IFunction;
 	public readonly placeBidLambda: lambda.IFunction;
-	public readonly processAuctionsLambda: lambda.IFunction;
+	public readonly processAuctionsLambda: NodejsFunction; // Had to change because want to add lambda specific env
 	public readonly deleteAuctionLambda: lambda.IFunction;
 	public readonly closeAuctionLambda: NodejsFunction; // Had to change because want to add lambda specific env
 	public readonly updateAuctionLambda: lambda.IFunction;
@@ -60,6 +60,7 @@ export class AuctionLambdas extends Construct {
 			handler: 'handler',
 			environment: {
 				AUCTIONS_TABLE: props.tableName,
+				AUTH_TABLE: props.authTableName,
 			},
 		});
 

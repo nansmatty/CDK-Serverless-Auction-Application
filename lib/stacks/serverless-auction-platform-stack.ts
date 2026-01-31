@@ -88,6 +88,8 @@ export class ServerlessAuctionPlatformStack extends Stack {
 		table.authTable.grantReadWriteData(authLambdas.verifyUserLambda);
 		table.authTable.grantReadData(authLambdas.signinUserLambda);
 		table.authTable.grantReadData(auctionsLambdas.resultAuctionLambda);
+		table.authTable.grantReadData(auctionsLambdas.processAuctionsLambda);
+		table.authTable.grantReadData(auctionsLambdas.closeAuctionLambda);
 
 		// Step Function and event-bridge
 		new AuctionScheduler(this, 'AuctionCloseSchedule', { processLambdaFunction: auctionsLambdas.processAuctionsLambda });
@@ -101,8 +103,10 @@ export class ServerlessAuctionPlatformStack extends Stack {
 
 		// Attaching env variables directly to specific lambda
 		auctionsLambdas.closeAuctionLambda.addEnvironment('AUCTION_CLOSED_QUEUE_URL', notificationQueue.auctionClosedQueue.queueUrl);
+		auctionsLambdas.processAuctionsLambda.addEnvironment('AUCTION_CLOSED_QUEUE_URL', notificationQueue.auctionClosedQueue.queueUrl);
 
 		// Attaching SQS SendMessage permission to lambda
 		notificationQueue.auctionClosedQueue.grantSendMessages(auctionsLambdas.closeAuctionLambda);
+		notificationQueue.auctionClosedQueue.grantSendMessages(auctionsLambdas.processAuctionsLambda);
 	}
 }
